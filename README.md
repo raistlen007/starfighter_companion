@@ -26,6 +26,19 @@ the .NET runtime is built into the program.
 
 Close the game before editing its pilots — most of them write the pilot file when they exit.
 
+## Using it
+
+The left side is a game menu: pick a game, then a version (the 1998 or DOS edition, Balance of Power, XWAUP, OpenXW…),
+and the pilots in that version's folder are listed. Click one to edit it; **Back to game menu** takes you back.
+
+Installed games are found automatically (Steam libraries, GOG, Heroic and common game folders, classic CD install
+folders, the OpenXW family's user folders and XWVM's pilot folder). Anything that is not found, or found in the wrong
+place, can be set in **Settings**, which lists every game and version with **Browse…**, **Automatic** and **None** buttons.
+Settings are stored in your user settings folder (`%APPDATA%\StarfighterCompanion` on Windows,
+`~/.config/StarfighterCompanion` on Linux and macOS).
+
+You can still open any pilot file directly with **Open a pilot file…** or by dragging it onto the window.
+
 ## How it keeps your pilot safe
 
 * **Only known layouts are opened.** A file is recognised by its extension and exact size (or, for XWVM, its XML root).
@@ -60,7 +73,8 @@ Pushing a tag such as `v0.1.0` makes GitHub Actions build all platforms and atta
 
 ### Project layout
 
-* `src/StarfighterCompanion.Core` — file formats, validation rules. No UI code; this is where the knowledge lives.
+* `src/StarfighterCompanion.Core` — file formats, validation rules, game library. No UI code; this is where the knowledge lives.
+  * `Library/` — the list of games and versions, automatic install detection, pilot scanning and settings.
   * `Binary/` — a small layout engine: each binary format is described field by field, and the build fails if
     a single byte is unaccounted for.
   * `Formats/<Game>/` — one file per game with its layout, value limits and rules.
