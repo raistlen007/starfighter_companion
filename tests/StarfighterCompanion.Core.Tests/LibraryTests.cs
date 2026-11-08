@@ -93,6 +93,75 @@ public sealed class LibraryTests : IDisposable
         Assert.Equal(dos, found.Single(d => d.VariantId == "xwingdos").Folder);
     }
 
+    private static string Touch(string folder, params string[] entries)
+    {
+        Directory.CreateDirectory(folder);
+        foreach (var entry in entries)
+        {
+            var path = Path.Combine(folder, entry);
+            if (Path.HasExtension(entry))
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+                File.WriteAllBytes(path, Array.Empty<byte>());
+            }
+            else
+            {
+                Directory.CreateDirectory(path);
+            }
+        }
+
+        return Path.GetFullPath(folder);
+    }
+
+    [Fact]
+    public void Tie_windows_edition_is_preferred_over_the_dos_edition()
+    {
+        var install = Path.Combine(_root, "STAR WARS TIE Fighter Special Edition");
+        Touch(Path.Combine(install, "TIE95"), "MISSION", "RESOURCE", "Z_TIE__.EXE", "TIE.EXE", "game.gog");
+        var win98 = Touch(Path.Combine(install, "TIE98"), "MISSION", "RESOURCE", "TIE95.EXE");
+
+        var finder = new InstallFinder();
+        finder.ExtraSearchRoots.Add(_root);
+
+        Assert.Equal(win98, finder.DetectAll().Single(d => d.VariantId == "tie").Folder);
+    }
+
+    [Fact]
+    public void Tie_editions_are_told_apart_by_their_files()
+    {
+        var finder = new InstallFinder();
+        var tie98 = Touch(Path.Combine(_root, "a"), "MISSION", "RESOURCE", "TIE95.EXE");
+        var tie95 = Touch(Path.Combine(_root, "b"), "mission", "resource", "z_tie__.exe", "tie.exe");
+        var tie94 = Touch(Path.Combine(_root, "c"), "MISSION", "RESOURCE", "TIE.EXE", "FLIGHT.OVL");
+        var both = Touch(Path.Combine(_root, "d"), "MISSION", "RESOURCE", "TIE95.EXE", "TIE.EXE");
+
+        Assert.True(finder.IsTie98Folder(tie98));
+        Assert.False(finder.IsTie95Folder(tie98));
+        Assert.True(finder.IsTie95Folder(tie95));
+        Assert.False(finder.IsTie98Folder(tie95));
+        Assert.True(finder.IsTie94Folder(tie94));
+        Assert.False(finder.IsTie98Folder(both));
+    }
+
+    [Fact]
+    public void X_wing_editions_are_told_apart_by_their_files()
+    {
+        var finder = new InstallFinder();
+        var cd98 = Touch(Path.Combine(_root, "cd98"), "XWINGTIE.EXE", Path.Combine("XWINGCD", "XWING95.EXE"), Path.Combine("XWINGCD", "X-Wing Data", "MISSION"));
+        var digital98 = Touch(Path.Combine(_root, "dig98"), "XWING95.EXE", Path.Combine("X-Wing Data", "MISSION"));
+        var cd94 = Touch(Path.Combine(_root, "cd94"), "MISSION", "RESOURCE", "CLASSIC", "TALK", "BWING.EXE", "BFLIGHT.OVL");
+        var floppy93 = Touch(Path.Combine(_root, "fl93"), "MISSION", "RESOURCE", "XWING.EXE", "FLIGHT.OVL");
+        var notDos = Touch(Path.Combine(_root, "x"), "MISSION", "RESOURCE", "CLASSIC", "XWING.EXE", "FLIGHT.OVL");
+
+        Assert.True(finder.IsXWing98Folder(cd98));
+        Assert.True(finder.IsXWing98Folder(digital98));
+        Assert.False(finder.IsXWing98Folder(cd94));
+        Assert.True(finder.IsXWingDosFolder(cd94));
+        Assert.True(finder.IsXWingDosFolder(floppy93));
+        Assert.False(finder.IsXWingDosFolder(notDos));
+        Assert.False(finder.IsXWingDosFolder(digital98));
+    }
+
     [Theory]
     [InlineData("xwing98_steam", "xwing98")]
     [InlineData("xwing98_gog", "xwing98")]

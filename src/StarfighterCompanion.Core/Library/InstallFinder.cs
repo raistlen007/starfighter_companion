@@ -66,7 +66,10 @@ public sealed partial class InstallFinder
                     Add("xwingdos", dos ?? dir, source);
                     break;
                 case GameKind.Tie:
-                    Add("tie", dir, source);
+                    // Steam and GOG ship the DOS and Windows editions side by side; pick the edition folder by
+                    // its files (XWVM's TIE resource finders), preferring the Windows 98 edition.
+                    var tie = FindFolderWith(dir, IsTie98Folder) ?? FindFolderWith(dir, IsTie95Folder) ?? FindFolderWith(dir, IsTie94Folder);
+                    Add("tie", tie ?? dir, source);
                     break;
                 case GameKind.XvT:
                     Add("xvt", dir, source);
@@ -372,13 +375,52 @@ public sealed partial class InstallFinder
         _ => null,
     };
 
-    /// <summary>1998 edition: XWING95.EXE next to "X-Wing Data" (XWVM's XW98 resource finders).</summary>
-    internal bool IsXWing98Folder(string dir) =>
-        FileExists(dir, "XWING95.EXE") && _subdirectories(dir).Any(d => string.Equals(Path.GetFileName(d), "X-Wing Data", StringComparison.OrdinalIgnoreCase));
+    // Edition markers, taken from XWVM's resource finders (XW93/XW94/XW98 and Tie94/Tie95/Tie98 ...ResourceFinder).
 
-    /// <summary>DOS editions: the B-Wing executable, or the CD image of the GOG (game.gog) / Steam (game.fil) 1994 edition.</summary>
+    /// <summary>1998 edition, digital (XWING95.EXE next to "X-Wing Data") or CD layout (XWINGTIE.EXE + XWINGCD).</summary>
+    internal bool IsXWing98Folder(string dir) =>
+        Matches(dir, ["XWING95.EXE", Path.Combine("X-Wing Data", "MISSION")], [])
+        || Matches(dir, ["XWINGTIE.EXE", Path.Combine("XWINGCD", "XWING95.EXE"), Path.Combine("XWINGCD", "X-Wing Data", "MISSION")], ["XWING.EXE", "XWING95.EXE"]);
+
+    /// <summary>DOS editions: 1994 Collector's CD (BWING.EXE + BFLIGHT.OVL), 1993 floppy (XWING.EXE + FLIGHT.OVL),
+    /// or the CD image of the GOG (game.gog) / Steam (game.fil) DOS edition.</summary>
     internal bool IsXWingDosFolder(string dir) =>
-        FileExists(dir, "BWING.EXE") || FileExists(dir, "XWING.EXE") || FileExists(dir, "game.gog") || FileExists(dir, "game.fil");
+        Matches(dir, ["MISSION", "RESOURCE", "BWING.EXE", "BFLIGHT.OVL"], [])
+        || Matches(dir, ["MISSION", "RESOURCE", "XWING.EXE", "FLIGHT.OVL"], ["CLASSIC"])
+        || Has(dir, "game.gog") || Has(dir, "game.fil");
+
+    /// <summary>TIE Fighter Windows 98 edition: TIE95.EXE without the DOS TIE.EXE.</summary>
+    internal bool IsTie98Folder(string dir) => Matches(dir, ["MISSION", "RESOURCE", "TIE95.EXE"], ["TIE.EXE"]);
+
+    /// <summary>TIE Fighter 1995 Collector's CD (DOS), as a CD install or the GOG/Steam CD image.</summary>
+    internal bool IsTie95Folder(string dir) => Matches(dir, ["MISSION", "RESOURCE", "Z_TIE__.EXE", "TIE.EXE"], []);
+
+    /// <summary>TIE Fighter 1994 floppy edition.</summary>
+    internal bool IsTie94Folder(string dir) => Matches(dir, ["MISSION", "RESOURCE", "TIE.EXE", "FLIGHT.OVL"], []);
+
+    private bool Matches(string dir, string[] present, string[] absent) =>
+        present.All(p => Has(dir, p)) && !absent.Any(a => Has(dir, a));
+
+    /// <summary>Whether a file or folder exists at <paramref name="relative"/> under <paramref name="dir"/>, ignoring case.</summary>
+    private bool Has(string dir, string relative)
+    {
+        var parts = relative.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        var current = dir;
+        for (var i = 0; i < parts.Length; i++)
+        {
+            var last = i == parts.Length - 1;
+            var sub = _subdirectories(current).FirstOrDefault(d => string.Equals(Path.GetFileName(d), parts[i], StringComparison.OrdinalIgnoreCase));
+            if (sub is not null)
+            {
+                current = sub;
+                continue;
+            }
+
+            return last && FileExists(current, parts[i]);
+        }
+
+        return true;
+    }
 
     /// <summary>The folder itself or a sub-folder up to two levels down that satisfies <paramref name="test"/>.</summary>
     private string? FindFolderWith(string root, Func<string, bool> test)
