@@ -10,8 +10,11 @@
     <RootNamespace>StarfighterCompanion</RootNamespace>
     <Product>Starfighter Companion</Product>
     <Version>0.1.0</Version>
-    <Copyright>Starfighter Companion contributors. AGPL-3.0.</Copyright>
+    <Copyright>Rasi and Starfighter Companion contributors. AGPL-3.0.</Copyright>
+    <Authors>Rasi</Authors>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- Icon of the .exe in Explorer and the taskbar. The window icon uses the same file (Assets/icon.ico). -->
+    <ApplicationIcon>Assets\icon.ico</ApplicationIcon>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     <BuiltInComInteropSupport>false</BuiltInComInteropSupport>
   </PropertyGroup>
@@ -33,6 +36,10 @@
     <PackageReference Include="Avalonia.Desktop" Version="11.3.22" />
     <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.22" />
     <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.22" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AvaloniaResource Include="Assets\**" />
   </ItemGroup>
 
   <ItemGroup>

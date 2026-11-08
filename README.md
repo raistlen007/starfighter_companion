@@ -1,4 +1,8 @@
+<img src="assets/icon-512.png" alt="" width="96" align="right" />
+
 # Starfighter Companion
+
+Made by Rasi.
 
 A small, standalone pilot file editor for the Star Wars X-Wing series.
 Open a pilot, change anything the game stores about it, and save — without being able to put the pilot
