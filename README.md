@@ -28,7 +28,8 @@ Close the game before editing its pilots — most of them write the pilot file w
 
 ## Using it
 
-The left side is a game menu: pick a game, then a version (the 1998 or DOS edition, Balance of Power, XWAUP, OpenXW…),
+The left side is a game menu: pick a game, then a version (X-Wing 1993 / 1994 / 1998, TIE Fighter 1994 / 1995 / 1998,
+Balance of Power, XWAUP, OpenXW…),
 and the pilots in that version's folder are listed. Click one to edit it; **Back to game menu** takes you back.
 
 Installed games are found automatically:
@@ -37,12 +38,32 @@ Installed games are found automatically:
   config in `%APPDATA%\XWVM`).
 * **XWVM pilots** — XWVM's pilot folder, `%APPDATA%\XWVM\pilots` (`~/.config/XWVM/pilots` on Linux/macOS).
 * **Steam libraries, GOG (registry and default folders), Heroic, common game folders and classic CD installs.**
-  Inside an X-Wing install, the 1998 and DOS editions are told apart by their files, using the same markers as XWVM
-  (`XWING95.EXE` + `X-Wing Data` for 1998; `BWING.EXE` / `game.gog` / `game.fil` for DOS).
+  Inside an install, each edition is told apart by its files, using the same markers as XWVM's resource finders
+  (for example `XWING95.EXE` + `X-Wing Data` for X-Wing 1998, `BWING.EXE` for the 1994 CD-ROM, `XWING.EXE` +
+  `FLIGHT.OVL` for the 1993 floppy; `TIE95.EXE` for TIE Fighter 1998, `Z_TIE__.EXE` for the 1995 CD-ROM).
 * **OpenXW, OpenTIE, OpenXvT, OpenXWA** — their user folders (`TotallyOpen/<App>` in the SDL preference path). Anything that is not found, or found in the wrong
 place, can be set in **Settings**, which lists every game and version with **Browse…**, **Automatic** and **None** buttons.
 Settings are stored in your user settings folder (`%APPDATA%\StarfighterCompanion` on Windows,
 `~/.config/StarfighterCompanion` on Linux and macOS).
+
+### Converting between editions and XWVM
+
+**Convert / export…** (top right of the editor, or the File menu) writes the open pilot as a new file for another
+version; the open file itself is not changed.
+
+* **X-Wing 1993 ⇄ 1994 ⇄ 1998** and **TIE Fighter 1994 ⇄ 1995 ⇄ 1998.** The editions store nearly the same record
+  (X-Wing's DOS record has one extra reserved byte), so nothing is lost. What differs is the content: the 1993 X-Wing
+  floppy needs the Imperial Pursuit and B-Wing add-ons for tours 4 and 5, and the 1994 TIE Fighter floppy has battles
+  1–7 (8–10 with Defender of the Empire) — you are warned about these, and a current battle the floppy does not have
+  is moved to one it has.
+* **Into XWVM.** An X-Wing or TIE Fighter pilot becomes a new XWVM pilot, or replaces that game's career of an XWVM
+  pilot with the same name (its other games, droid and avatar are kept). X-Wing follows XWVM's own pilot import.
+* **Out of XWVM.** The X-Wing or TIE Fighter career of an XWVM pilot is written as a pilot file for any edition.
+  XWVM does not record which of two alternative missions was flown, so such scores go to the first one, and
+  craft the old game has no slot for are left out (you are told how many).
+
+The new file goes into that version's folder from Settings (or one you pick), named after the pilot. The DOS editions
+allow 8 characters, the 1998 editions 16. If the file exists, it is replaced and backed up as usual.
 
 You can still open any pilot file directly with **Open a pilot file…** or by dragging it onto the window.
 

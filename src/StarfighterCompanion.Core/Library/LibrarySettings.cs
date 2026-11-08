@@ -33,6 +33,7 @@ public sealed class LibrarySettings
         }
 
         settings.FilePath = path;
+        settings.MigrateOldVariants();
         return settings;
     }
 
@@ -41,6 +42,35 @@ public sealed class LibrarySettings
         var path = FilePath ?? DefaultPath;
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
         File.WriteAllText(path, JsonSerializer.Serialize(this, SettingsJsonContext.Default.LibrarySettings));
+    }
+
+    /// <summary>
+    /// Earlier versions had one "xwingdos" and one "tie" entry. Each moves to the edition whose files are in that
+    /// folder (the CD-ROM edition when they cannot be told apart).
+    /// </summary>
+    private void MigrateOldVariants()
+    {
+        var finder = new InstallFinder();
+        Move("xwingdos", folder => (folder.Length > 0 ? finder.XWingDosEditionOf(folder) : null) ?? "xwing94");
+        Move("tie", folder => (folder.Length > 0 ? finder.TieEditionOf(folder) : null) ?? "tie95");
+
+        void Move(string oldId, Func<string, string> newId)
+        {
+            if (Folders.Remove(oldId, out var folder))
+            {
+                string target;
+                try
+                {
+                    target = newId(folder);
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                {
+                    target = newId(string.Empty);
+                }
+
+                Folders.TryAdd(target, folder);
+            }
+        }
     }
 
     /// <summary>True when the user chose the folder (or chose "none") instead of auto-detection.</summary>

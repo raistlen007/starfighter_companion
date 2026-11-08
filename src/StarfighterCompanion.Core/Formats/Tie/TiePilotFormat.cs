@@ -226,6 +226,32 @@ internal sealed class TiePilotDocument : BinaryPilotDocument
             }
         }
 
+        var maxBattles = Edition?.MaxBattles ?? 13;
+        var current = Field("battle.current");
+        if (current.GetInteger() >= maxBattles)
+        {
+            yield return CommonRules.Broken(
+                Edition is null
+                    ? $"Battle {current.GetInteger() + 1} does not exist; TIE Fighter has 13 battles."
+                    : $"Battle {current.GetInteger() + 1} does not exist in the {Edition.Name} (it has battles 1-{maxBattles}{(maxBattles == 10 ? ", 8-10 with Defender of the Empire" : string.Empty)}).",
+                current);
+        }
+        else if (Edition is { } edition && current.GetInteger() >= edition.BaseBattles && Int($"battle.status[{current.GetInteger()}]") != 0)
+        {
+            yield return CommonRules.Odd(
+                $"Battle {current.GetInteger() + 1} needs the Defender of the Empire add-on in the {edition.Name}.", current);
+        }
+
+        for (var b = maxBattles; b < TiePilotFormat.BattleCount; b++)
+        {
+            if (Int($"battle.status[{b}]") != 0)
+            {
+                yield return CommonRules.Odd(
+                    $"Battle {b + 1} has progress, but {(Edition is null ? "TIE Fighter" : "the " + Edition.Name)} has no such battle; the game ignores it.",
+                    Field($"battle.status[{b}]"));
+            }
+        }
+
         if (Int("secretOrder") == 0 && Int("secretScore") > 0)
         {
             yield return CommonRules.Odd("The pilot has a Secret Order score but is not a member of the Secret Order.", Field("secretOrder"));

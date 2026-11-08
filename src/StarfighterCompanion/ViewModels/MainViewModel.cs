@@ -1,7 +1,9 @@
 using System.Collections.ObjectModel;
 using Avalonia.Controls;
 using Avalonia.Platform.Storage;
+using StarfighterCompanion.Core.Conversion;
 using StarfighterCompanion.Core.Formats;
+using StarfighterCompanion.Core.Library;
 using StarfighterCompanion.Core.Model;
 using StarfighterCompanion.Services;
 using StarfighterCompanion.Views;
@@ -14,6 +16,7 @@ public sealed partial class MainViewModel : ViewModelBase
 
     private readonly Window _window;
     private PilotDocument? _document;
+    private PilotFormat? _format;
     private string? _path;
     private GroupNode? _selectedGroup;
     private string _searchText = string.Empty;
@@ -29,6 +32,7 @@ public sealed partial class MainViewModel : ViewModelBase
         SaveCommand = new Command(SaveAsync, () => _document is not null);
         SaveAsCommand = new Command(SaveAsAsync, () => _document is not null);
         RevertCommand = new Command(RevertAsync, () => _document is not null && _path is not null);
+        ConvertCommand = new Command(ConvertAsync, () => CanConvert);
         AboutCommand = new Command(AboutAsync);
         ExitCommand = new Command(() => _window.Close());
         InitializeLibrary();
@@ -38,6 +42,11 @@ public sealed partial class MainViewModel : ViewModelBase
     public Command SaveCommand { get; }
     public Command SaveAsCommand { get; }
     public Command RevertCommand { get; }
+    public Command ConvertCommand { get; }
+
+    /// <summary>X-Wing, TIE Fighter and XWVM pilots can be converted.</summary>
+    public bool CanConvert => _document is not null && _path is not null &&
+                              _format is Core.Formats.XWing.XWingPilotFormat or Core.Formats.Tie.TiePilotFormat or Core.Formats.Xwvm.XwvmPilotFormat;
     public Command AboutCommand { get; }
     public Command ExitCommand { get; }
 
@@ -51,7 +60,9 @@ public sealed partial class MainViewModel : ViewModelBase
 
     public string PilotTitle => _document?.PilotName ?? string.Empty;
 
-    public string FormatTitle => _document is null ? string.Empty : $"{_document.GameName} · {_document.FormatName}";
+    public string FormatTitle => _document is null
+        ? string.Empty
+        : $"{_document.GameName} · {(_document.Edition is { } edition ? edition.Name : _document.FormatName)}";
 
     public string FilePath => _path ?? string.Empty;
 
@@ -159,7 +170,8 @@ public sealed partial class MainViewModel : ViewModelBase
         }
     }
 
-    public async Task OpenPathAsync(string path, bool confirm = true)
+    /// <param name="variantId">The library version the file was picked from; it tells which edition the pilot is for.</param>
+    public async Task OpenPathAsync(string path, bool confirm = true, string? variantId = null)
     {
         if (confirm && !await ConfirmDiscardAsync())
         {
@@ -168,7 +180,11 @@ public sealed partial class MainViewModel : ViewModelBase
 
         try
         {
-            var document = PilotFormats.Open(path);
+            var data = File.ReadAllBytes(path);
+            var document = PilotFormats.Open(path, data);
+            var format = PilotFormats.Detect(path, data)!;
+            document.Edition = Edition.For(variantId, format);
+            _format = format;
             Load(document, path);
             ShowSettings = false;
             Status = $"Opened {Path.GetFileName(path)}.";
@@ -304,7 +320,62 @@ public sealed partial class MainViewModel : ViewModelBase
             return;
         }
 
-        await OpenPathAsync(_path, confirm: false);
+        await OpenPathAsync(_path, confirm: false, _document.Edition?.Id);
+    }
+
+    private async Task ConvertAsync()
+    {
+        if (_document is null || _path is null || _format is null)
+        {
+            return;
+        }
+
+        if (_document.IsDirty)
+        {
+            var answer = await MessageDialog.AskAsync(_window, "Save first?",
+                "The pilot has unsaved changes. Save them before converting, so they are included?", "Save", "Convert the saved file", "Cancel");
+            if (answer == 2 || answer < 0 || (answer == 0 && !await SaveAsync()))
+            {
+                return;
+            }
+        }
+
+        byte[] data;
+        try
+        {
+            data = await File.ReadAllBytesAsync(_path);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            await MessageDialog.ShowAsync(_window, "Could not read the pilot", ex.Message);
+            return;
+        }
+
+        if (PilotConverter.TargetsFor(_format, _document.Edition, data).Count == 0)
+        {
+            await MessageDialog.ShowAsync(_window, "Nothing to convert", "This XWVM pilot has no X-Wing or TIE Fighter career.");
+            return;
+        }
+
+        var outcome = await ConvertDialog.ShowAsync(_window, data, _format, _document.Edition, _document.PilotName,
+            variantId => _library.FolderFor(variantId) is { } folder && Directory.Exists(folder) ? folder : null,
+            BrowseForVariantAsync);
+        if (outcome is null)
+        {
+            return;
+        }
+
+        Status = $"Wrote {outcome.Path}.";
+        if (_currentVariant is not null && _currentVariant.Variant.Id == outcome.Target.VariantId)
+        {
+            await ScanPilotsAsync(_currentVariant);
+        }
+
+        if (await MessageDialog.AskAsync(_window, "Pilot converted",
+                $"The pilot was written to\n{outcome.Path}\n\nOpen it now?", "Open", "Stay here") == 0)
+        {
+            await OpenPathAsync(outcome.Path, confirm: false, outcome.Target.VariantId);
+        }
     }
 
     private Task AboutAsync() => MessageDialog.ShowAsync(_window, "About Starfighter Companion",
@@ -354,6 +425,8 @@ public sealed partial class MainViewModel : ViewModelBase
         SaveCommand.RaiseCanExecuteChanged();
         SaveAsCommand.RaiseCanExecuteChanged();
         RevertCommand.RaiseCanExecuteChanged();
+        ConvertCommand.RaiseCanExecuteChanged();
+        Raise(nameof(CanConvert));
     }
 
     private void OnFieldChanged(object? sender, EditableField field)

@@ -34,6 +34,7 @@
         <MenuItem Header="_Save" InputGesture="Ctrl+S" Command="{Binding SaveCommand}" />
         <MenuItem Header="Save _As…" InputGesture="Ctrl+Shift+S" Command="{Binding SaveAsCommand}" />
         <MenuItem Header="_Revert to saved" Command="{Binding RevertCommand}" />
+        <MenuItem Header="_Convert / export…" Command="{Binding ConvertCommand}" />
         <Separator />
         <MenuItem Header="Se_ttings" Command="{Binding ShowSettingsCommand}" />
         <Separator />
@@ -194,7 +195,12 @@
 
           <Border Grid.Row="0" Padding="14,10" Background="#0FFFFFFF">
             <StackPanel Spacing="2">
-              <TextBlock Text="{Binding PilotTitle}" FontSize="22" FontWeight="SemiBold" />
+              <DockPanel>
+                <Button DockPanel.Dock="Right" VerticalAlignment="Top" Content="Convert / export…"
+                        Command="{Binding ConvertCommand}" IsVisible="{Binding CanConvert}"
+                        ToolTip.Tip="Write this pilot for another edition of the game, or move it into or out of XWVM." />
+                <TextBlock Text="{Binding PilotTitle}" FontSize="22" FontWeight="SemiBold" />
+              </DockPanel>
               <TextBlock Text="{Binding FormatTitle}" />
               <TextBlock Text="{Binding FilePath}" Classes="muted" FontSize="12" TextTrimming="PathSegmentEllipsis" />
               <ItemsControl ItemsSource="{Binding Notes}" Margin="0,4,0,0">

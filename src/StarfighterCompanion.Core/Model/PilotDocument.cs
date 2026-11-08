@@ -34,6 +34,12 @@ public abstract class PilotDocument
 
     public IReadOnlyList<EditableField> Fields => _fields;
 
+    /// <summary>
+    /// The retail edition the pilot is used with, when known (from the library version it was opened from).
+    /// Rules use it for things that only exist in some editions, such as add-on tours and battles.
+    /// </summary>
+    public Library.Edition? Edition { get; set; }
+
     public bool IsDirty { get; private set; }
 
     public event EventHandler<EditableField>? FieldChanged;
