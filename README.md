@@ -101,7 +101,7 @@ dotnet publish src/StarfighterCompanion -c Release -r linux-x64 -o publish/linux
 dotnet publish src/StarfighterCompanion -c Release -r osx-arm64 -o publish/osx-arm64
 ```
 
-Pushing a tag such as `v0.1.0` makes GitHub Actions build all platforms and attach them to a release.
+Pushing a tag such as `v1.0.0` makes GitHub Actions build all platforms and attach them to a release.
 
 ### Project layout
 
