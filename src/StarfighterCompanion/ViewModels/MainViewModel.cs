@@ -378,15 +378,7 @@ public sealed partial class MainViewModel : ViewModelBase
         }
     }
 
-    private Task AboutAsync() => MessageDialog.ShowAsync(_window, "About Starfighter Companion",
-        "Starfighter Companion " + typeof(MainViewModel).Assembly.GetName().Version?.ToString(3) + "\n\n" +
-        "A pilot file editor for the X-Wing series: X-Wing, TIE Fighter, X-Wing vs. TIE Fighter, Balance of Power, " +
-        "X-Wing Alliance (including XWAUP and TFTC), the OpenXW family of reimplementations, and XWVM.\n\n" +
-        "Values are checked as you type, and a pilot that would break the game cannot be saved. " +
-        "Before a file is overwritten, the original is kept as .original.bak and the previous version as .bak.\n\n" +
-        "File layouts are based on the OpenXW, OpenTIE, OpenXvT and OpenXWA projects (GPL-3.0) and on XWVM.\n\n" +
-        "Free software under the GNU Affero General Public License v3.\n" +
-        "Star Wars and related names are trademarks of Lucasfilm Ltd. This project is not affiliated with Lucasfilm, Disney or LucasArts.");
+    private Task AboutAsync() => AboutDialog.ShowAsync(_window);
 
     private void Load(PilotDocument document, string path)
     {

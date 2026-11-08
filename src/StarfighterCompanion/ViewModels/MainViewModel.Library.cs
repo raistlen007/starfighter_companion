@@ -32,6 +32,9 @@ public sealed partial class MainViewModel
     public Command CloseSettingsCommand { get; private set; } = null!;
     public Command DetectCommand { get; private set; } = null!;
 
+    /// <summary>Which sidebar page is shown (0 games, 1 versions, 2 pilots); the sidebar slides between them.</summary>
+    public int PageIndex => (int)_page;
+
     public bool IsGamesPage => _page == NavigationPage.Games;
     public bool IsVariantsPage => _page == NavigationPage.Variants;
     public bool IsPilotsPage => _page == NavigationPage.Pilots;
@@ -289,6 +292,7 @@ public sealed partial class MainViewModel
     private void GoTo(NavigationPage page)
     {
         _page = page;
+        Raise(nameof(PageIndex));
         Raise(nameof(IsGamesPage));
         Raise(nameof(IsVariantsPage));
         Raise(nameof(IsPilotsPage));
