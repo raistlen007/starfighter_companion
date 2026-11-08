@@ -19,7 +19,8 @@ always written back unchanged.
 
 * Source: OpenTIE `src/tie/shipext.h`, `src/tie_runtime/storage/pilot_storage.c`.
 * Record: **1,928 bytes**, stored twice (current + backup) = 3,856 bytes. Same layout in all editions.
-* Values: rank 0–5, difficulty 0–2, Secret Order rank 0–9, battle status 0–3, current battle 0–19.
+* Values: rank 0–5, difficulty 0–2, Secret Order rank 0–9, battle status 0–3. The current battle must exist in the
+  edition (1–10 on the 1994 floppy, 1–13 otherwise).
 * The pilot's name is the file name.
 
 ## X-Wing vs. TIE Fighter — `.plt`
@@ -49,6 +50,32 @@ always written back unchanged.
 * The document is edited in place, so unknown elements and attributes survive.
 * Rules: the active tour must have a tour record (XWVM fails to load the pilot otherwise); a tour's
   `CurrentTourStep` of 2147483647 means completed.
+
+## Converting
+
+`src/StarfighterCompanion.Core/Conversion`.
+
+* **X-Wing editions.** The 1993 and 1994 DOS editions write the same 1,706-byte record (XWVM `Xw93PilotFile`); the
+  1998 edition the same fields in 1,705 bytes (`Xw98PilotFile`). The reserved block at 0x289 is 87 bytes in DOS and
+  86 in 1998; the converter adds or drops that block's last byte. Every copy in the file is converted.
+* **TIE Fighter editions.** Identical record. Battles that exist: 1–7 on the 1994 floppy (8–10 with Defender of the
+  Empire), 1–13 on the CD-ROM and 1998 editions (OpenTIE loads `battleN.lfd` only when present; XWVM's `GameVariant`
+  list names the add-ons). Converting to the floppy moves a current battle above 10 to the last battle it has.
+* **Pilot names** are file names: 8 characters for DOS editions, 16 for 1998 (OpenXW register.h, OpenTIE register.c);
+  letters, digits, `_` and `-`.
+* **X-Wing → XWVM** follows `PilotGameRecord(IOriginalPilotFile, …)`: rank, status, score, `AiScore` = 4 × skill,
+  Kalidor Crescent (`kalidor`, level − 1), proving grounds, historical tours `xcombat`/`ycombat`/`acombat`/`bcombat`/
+  `bonus`, 24 kill/capture slots, and the stat records. Tours `tour1`…`tour5`: the progress byte counts completed
+  operations (OpenXW `fediskio.c`), so it is the XWVM tour step; an operation's score is the better of its two
+  alternative missions (operation tables from OpenXW `shipext.c`, identical to XWVM `todStages.json`).
+* **TIE Fighter → XWVM** (XWVM has no importer): battles become tours `battle1`…`battle13` (step = mission cursor,
+  completed = 2147483647), secret and bonus objective bits become `SecondaryGoals`/`BonusGoals`, the combat chamber
+  becomes historic tours `ship1`…`ship7`, the Secret Order rank the `secretOrderRank` award (level = rank − 1), and
+  kills map from TIE's 69 species to XWVM entity types (the Super Star Destroyer has none). A pilot lost in battle
+  (status 2) is imported as captured.
+* **XWVM → X-Wing/TIE** builds a new pilot the way each game's registration creates one (X-Wing: zeros with the
+  Combat Chamber unlock bytes at 0xFF; TIE: version 1, training level 2) and fills it in. TIE files get two identical
+  copies, X-Wing one. Every XWVM pilot written gets all four game records, because XWVM looks them up unchecked.
 
 ## Adding a format
 

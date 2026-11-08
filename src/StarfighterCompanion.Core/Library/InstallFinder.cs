@@ -61,15 +61,58 @@ public sealed partial class InstallFinder
                     // Steam and GOG ship both editions; find each edition's own folder by its files
                     // (the same markers XWVM uses to recognise them).
                     var win98 = FindFolderWith(dir, IsXWing98Folder);
-                    var dos = FindFolderWith(dir, IsXWingDosFolder);
-                    Add("xwing98", win98 ?? dir, source);
-                    Add("xwingdos", dos ?? dir, source);
+                    var floppy = FindFolderWith(dir, IsXWing93Folder);
+                    var cd = FindFolderWith(dir, IsXWing94Folder);
+                    if (win98 is not null)
+                    {
+                        Add("xwing98", win98, source);
+                    }
+
+                    if (floppy is not null)
+                    {
+                        Add("xwing93", floppy, source);
+                    }
+
+                    if (cd is not null)
+                    {
+                        Add("xwing94", cd, source);
+                    }
+
+                    if (win98 is null && floppy is null && cd is null)
+                    {
+                        // Unrecognised layout: offer the folder for the editions found on Steam and GOG.
+                        Add("xwing98", dir, source);
+                        Add("xwing94", dir, source);
+                    }
+
                     break;
                 case GameKind.Tie:
                     // Steam and GOG ship the DOS and Windows editions side by side; pick the edition folder by
                     // its files (XWVM's TIE resource finders), preferring the Windows 98 edition.
-                    var tie = FindFolderWith(dir, IsTie98Folder) ?? FindFolderWith(dir, IsTie95Folder) ?? FindFolderWith(dir, IsTie94Folder);
-                    Add("tie", tie ?? dir, source);
+                    var tie98 = FindFolderWith(dir, IsTie98Folder);
+                    var tie95 = FindFolderWith(dir, IsTie95Folder);
+                    var tie94 = FindFolderWith(dir, IsTie94Folder);
+                    if (tie98 is not null)
+                    {
+                        Add("tie98", tie98, source);
+                    }
+
+                    if (tie95 is not null)
+                    {
+                        Add("tie95", tie95, source);
+                    }
+
+                    if (tie94 is not null)
+                    {
+                        Add("tie94", tie94, source);
+                    }
+
+                    if (tie98 is null && tie95 is null && tie94 is null)
+                    {
+                        Add("tie98", dir, source);
+                        Add("tie95", dir, source);
+                    }
+
                     break;
                 case GameKind.XvT:
                     Add("xvt", dir, source);
@@ -370,8 +413,11 @@ public sealed partial class InstallFinder
     {
         null => null,
         var v when v.StartsWith("xwing98") => "xwing98",
-        var v when v.StartsWith("xwing93") || v.StartsWith("xwing94") => "xwingdos",
-        var v when v.StartsWith("tie") => "tie",
+        var v when v.StartsWith("xwing94") => "xwing94",
+        var v when v.StartsWith("xwing93") => "xwing93",
+        var v when v.StartsWith("tie98") => "tie98",
+        var v when v.StartsWith("tie95") => "tie95",
+        var v when v.StartsWith("tie94") => "tie94",
         _ => null,
     };
 
@@ -382,12 +428,25 @@ public sealed partial class InstallFinder
         Matches(dir, ["XWING95.EXE", Path.Combine("X-Wing Data", "MISSION")], [])
         || Matches(dir, ["XWINGTIE.EXE", Path.Combine("XWINGCD", "XWING95.EXE"), Path.Combine("XWINGCD", "X-Wing Data", "MISSION")], ["XWING.EXE", "XWING95.EXE"]);
 
-    /// <summary>DOS editions: 1994 Collector's CD (BWING.EXE + BFLIGHT.OVL), 1993 floppy (XWING.EXE + FLIGHT.OVL),
-    /// or the CD image of the GOG (game.gog) / Steam (game.fil) DOS edition.</summary>
-    internal bool IsXWingDosFolder(string dir) =>
+    /// <summary>DOS editions: the 1994 CD-ROM or the 1993 floppy.</summary>
+    internal bool IsXWingDosFolder(string dir) => IsXWing94Folder(dir) || IsXWing93Folder(dir);
+
+    /// <summary>1994 Collector's CD (BWING.EXE + BFLIGHT.OVL), or the CD image of the GOG (game.gog) / Steam (game.fil) DOS edition.</summary>
+    internal bool IsXWing94Folder(string dir) =>
         Matches(dir, ["MISSION", "RESOURCE", "BWING.EXE", "BFLIGHT.OVL"], [])
-        || Matches(dir, ["MISSION", "RESOURCE", "XWING.EXE", "FLIGHT.OVL"], ["CLASSIC"])
         || Has(dir, "game.gog") || Has(dir, "game.fil");
+
+    /// <summary>1993 floppy: XWING.EXE + FLIGHT.OVL, without the CD-ROM's CLASSIC folder.</summary>
+    internal bool IsXWing93Folder(string dir) =>
+        Matches(dir, ["MISSION", "RESOURCE", "XWING.EXE", "FLIGHT.OVL"], ["CLASSIC"]);
+
+    /// <summary>The TIE Fighter edition whose files are in <paramref name="dir"/>, if any.</summary>
+    public string? TieEditionOf(string dir) =>
+        IsTie98Folder(dir) ? "tie98" : IsTie95Folder(dir) ? "tie95" : IsTie94Folder(dir) ? "tie94" : null;
+
+    /// <summary>The X-Wing DOS edition whose files are in <paramref name="dir"/>, if any.</summary>
+    public string? XWingDosEditionOf(string dir) =>
+        IsXWing94Folder(dir) ? "xwing94" : IsXWing93Folder(dir) ? "xwing93" : null;
 
     /// <summary>TIE Fighter Windows 98 edition: TIE95.EXE without the DOS TIE.EXE.</summary>
     internal bool IsTie98Folder(string dir) => Matches(dir, ["MISSION", "RESOURCE", "TIE95.EXE"], ["TIE.EXE"]);

@@ -54,14 +54,20 @@ public static class GameCatalog
             {
                 new VariantDefinition
                 {
-                    Id = "xwing98", GameId = XWing, Name = "1998 Windows edition", SearchDepth = 3,
-                    Description = "The 1998 Collector Series, also the 1998 version included on Steam and GOG.",
+                    Id = "xwing98", GameId = XWing, Name = "1998 Collector Series (Windows)", SearchDepth = 3,
+                    Description = "The 1998 Windows edition, also the 1998 version included on Steam and GOG.",
                     Accepts = f => f is XWingPilotFormat { RecordSize: XWingPilotFormat.WindowsRecordSize },
                 },
                 new VariantDefinition
                 {
-                    Id = "xwingdos", GameId = XWing, Name = "1993 / 1994 DOS edition", SearchDepth = 3,
-                    Description = "The original floppy and the 1994 Collector's CD-ROM, also included on Steam and GOG.",
+                    Id = "xwing94", GameId = XWing, Name = "1994 Collector's CD-ROM (DOS)", SearchDepth = 3,
+                    Description = "The 1994 DOS CD-ROM with all five tours, also the DOS version included on Steam and GOG.",
+                    Accepts = f => f is XWingPilotFormat { RecordSize: XWingPilotFormat.DosRecordSize },
+                },
+                new VariantDefinition
+                {
+                    Id = "xwing93", GameId = XWing, Name = "1993 floppy edition (DOS)", SearchDepth = 3,
+                    Description = "The original floppy release. Tours 4 and 5 need the Imperial Pursuit and B-Wing add-on disks.",
                     Accepts = f => f is XWingPilotFormat { RecordSize: XWingPilotFormat.DosRecordSize },
                 },
                 new VariantDefinition
@@ -80,8 +86,20 @@ public static class GameCatalog
             {
                 new VariantDefinition
                 {
-                    Id = "tie", GameId = Tie, Name = "TIE Fighter", SearchDepth = 3,
-                    Description = "Floppy, 1995 CD-ROM or 1998 Windows edition (Steam and GOG include both).",
+                    Id = "tie98", GameId = Tie, Name = "1998 Collector Series (Windows)", SearchDepth = 3,
+                    Description = "The 1998 Windows edition, also included on Steam and GOG.",
+                    Accepts = f => f is TiePilotFormat,
+                },
+                new VariantDefinition
+                {
+                    Id = "tie95", GameId = Tie, Name = "1995 Collector's CD-ROM (DOS)", SearchDepth = 3,
+                    Description = "The DOS CD-ROM with all 13 battles, also the DOS version included on Steam and GOG.",
+                    Accepts = f => f is TiePilotFormat,
+                },
+                new VariantDefinition
+                {
+                    Id = "tie94", GameId = Tie, Name = "1994 floppy edition (DOS)", SearchDepth = 3,
+                    Description = "The original floppy release: battles 1-7, and 8-10 with the Defender of the Empire add-on.",
                     Accepts = f => f is TiePilotFormat,
                 },
                 new VariantDefinition

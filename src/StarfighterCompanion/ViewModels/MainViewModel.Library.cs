@@ -260,7 +260,7 @@ public sealed partial class MainViewModel
 
     private async Task OpenPilotAsync(PilotItemViewModel pilot)
     {
-        await OpenPathAsync(pilot.Entry.Path);
+        await OpenPathAsync(pilot.Entry.Path, variantId: _currentVariant?.Variant.Id);
         Dispatcher.UIThread.Post(() => Raise(nameof(SelectedPilotItem)));
     }
 
@@ -364,6 +364,17 @@ public sealed partial class MainViewModel
         {
             row.SetFolder(path);
         }
+    }
+
+    private async Task<string?> BrowseForVariantAsync(string variantId)
+    {
+        var folders = await _window.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+        {
+            Title = $"Folder for {GameCatalog.Variant(variantId).Name}",
+            AllowMultiple = false,
+        });
+
+        return folders.FirstOrDefault()?.TryGetLocalPath();
     }
 
     private void RaiseContentState()

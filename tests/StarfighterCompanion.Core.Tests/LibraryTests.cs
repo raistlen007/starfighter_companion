@@ -42,7 +42,7 @@ public sealed class LibraryTests : IDisposable
         File.WriteAllBytes(Path.Combine(game, "LUKE.PLT.bak"), new byte[XWingPilotFormat.WindowsRecordSize]);
 
         var win = PilotScanner.Scan(GameCatalog.Variant("xwing98"), game);
-        var dos = PilotScanner.Scan(GameCatalog.Variant("xwingdos"), game);
+        var dos = PilotScanner.Scan(GameCatalog.Variant("xwing94"), game);
         Assert.Equal(new[] { "LUKE" }, win.Select(p => p.Name));
         Assert.Equal(new[] { "WEDGE" }, dos.Select(p => p.Name));
     }
@@ -68,7 +68,7 @@ public sealed class LibraryTests : IDisposable
         finder.ExtraSearchRoots.Add(_root);
         var found = finder.DetectAll();
 
-        Assert.Contains(found, d => d.VariantId == "tie" && d.Folder.EndsWith("STAR WARS TIE Fighter"));
+        Assert.Contains(found, d => d.VariantId == "tie98" && d.Folder.EndsWith("STAR WARS TIE Fighter"));
         Assert.Contains(found, d => d.VariantId == "xvt");
         Assert.Contains(found, d => d.VariantId == "bop" && d.Folder.EndsWith("BalanceOfPower"));
     }
@@ -90,7 +90,7 @@ public sealed class LibraryTests : IDisposable
         var found = finder.DetectAll();
 
         Assert.Equal(win98, found.Single(d => d.VariantId == "xwing98").Folder);
-        Assert.Equal(dos, found.Single(d => d.VariantId == "xwingdos").Folder);
+        Assert.Equal(dos, found.Single(d => d.VariantId == "xwing94").Folder);
     }
 
     private static string Touch(string folder, params string[] entries)
@@ -114,7 +114,7 @@ public sealed class LibraryTests : IDisposable
     }
 
     [Fact]
-    public void Tie_windows_edition_is_preferred_over_the_dos_edition()
+    public void Each_tie_edition_in_an_install_gets_its_own_folder()
     {
         var install = Path.Combine(_root, "STAR WARS TIE Fighter Special Edition");
         Touch(Path.Combine(install, "TIE95"), "MISSION", "RESOURCE", "Z_TIE__.EXE", "TIE.EXE", "game.gog");
@@ -123,7 +123,9 @@ public sealed class LibraryTests : IDisposable
         var finder = new InstallFinder();
         finder.ExtraSearchRoots.Add(_root);
 
-        Assert.Equal(win98, finder.DetectAll().Single(d => d.VariantId == "tie").Folder);
+        var found = finder.DetectAll();
+        Assert.Equal(win98, found.Single(d => d.VariantId == "tie98").Folder);
+        Assert.Equal(Path.GetFullPath(Path.Combine(install, "TIE95")), found.Single(d => d.VariantId == "tie95").Folder);
     }
 
     [Fact]
@@ -160,15 +162,18 @@ public sealed class LibraryTests : IDisposable
         Assert.True(finder.IsXWingDosFolder(floppy93));
         Assert.False(finder.IsXWingDosFolder(notDos));
         Assert.False(finder.IsXWingDosFolder(digital98));
+        Assert.Equal("xwing94", finder.XWingDosEditionOf(cd94));
+        Assert.Equal("xwing93", finder.XWingDosEditionOf(floppy93));
     }
 
     [Theory]
     [InlineData("xwing98_steam", "xwing98")]
     [InlineData("xwing98_gog", "xwing98")]
-    [InlineData("xwing94_gog_german", "xwingdos")]
-    [InlineData("xwing93", "xwingdos")]
-    [InlineData("tie95_steam", "tie")]
-    [InlineData("tie98", "tie")]
+    [InlineData("xwing94_gog_german", "xwing94")]
+    [InlineData("xwing93", "xwing93")]
+    [InlineData("tie94", "tie94")]
+    [InlineData("tie95_steam", "tie95")]
+    [InlineData("tie98", "tie98")]
     [InlineData("none", null)]
     public void Xwvm_game_variants_map_to_editor_versions(string xwvmVariant, string? expected) =>
         Assert.Equal(expected, InstallFinder.MapXwvmVariant(xwvmVariant));
@@ -179,22 +184,37 @@ public sealed class LibraryTests : IDisposable
         var settingsPath = Path.Combine(_root, "settings.json");
         var settings = LibrarySettings.Load(settingsPath);
         var library = new GameLibrary(settings);
-        library.ApplyDetection(new[] { new DetectedFolder("tie", "/detected/tie", "Steam") });
+        library.ApplyDetection(new[] { new DetectedFolder("tie98", "/detected/tie", "Steam") });
 
-        Assert.Equal("/detected/tie", library.FolderFor("tie"));
-        Assert.True(library.IsAutoDetected("tie"));
+        Assert.Equal("/detected/tie", library.FolderFor("tie98"));
+        Assert.True(library.IsAutoDetected("tie98"));
 
-        settings.SetFolder("tie", "/my/tie");
+        settings.SetFolder("tie98", "/my/tie");
         settings.SetFolder("xwa", "");
         settings.Save();
 
         var reloaded = new GameLibrary(LibrarySettings.Load(settingsPath));
-        reloaded.ApplyDetection(new[] { new DetectedFolder("tie", "/detected/tie", "Steam"), new DetectedFolder("xwa", "/detected/xwa", "Steam") });
-        Assert.Equal("/my/tie", reloaded.FolderFor("tie"));
+        reloaded.ApplyDetection(new[] { new DetectedFolder("tie98", "/detected/tie", "Steam"), new DetectedFolder("xwa", "/detected/xwa", "Steam") });
+        Assert.Equal("/my/tie", reloaded.FolderFor("tie98"));
         Assert.Null(reloaded.FolderFor("xwa"));
 
         reloaded.Settings.UseAutoDetection("xwa");
         Assert.Equal("/detected/xwa", reloaded.FolderFor("xwa"));
+    }
+
+    [Fact]
+    public void Old_single_edition_settings_move_to_the_matching_edition()
+    {
+        var floppy = Touch(Path.Combine(_root, "TIEFLOP"), "MISSION", "RESOURCE", "TIE.EXE", "FLIGHT.OVL");
+        var path = Path.Combine(_root, "old.json");
+        File.WriteAllText(path, "{ \"Folders\": { \"tie\": " + System.Text.Json.JsonSerializer.Serialize(floppy) + ", \"xwingdos\": \"\" } }");
+
+        var settings = LibrarySettings.Load(path);
+
+        Assert.Equal(floppy, settings.Folders["tie94"]);
+        Assert.Equal(string.Empty, settings.Folders["xwing94"]);
+        Assert.False(settings.Folders.ContainsKey("tie"));
+        Assert.False(settings.Folders.ContainsKey("xwingdos"));
     }
 
     [Fact]
@@ -205,6 +225,6 @@ public sealed class LibraryTests : IDisposable
             Assert.True(Formats.PilotFormats.All.Any(variant.Accepts), variant.Id);
         }
 
-        Assert.True(GameCatalog.Variant("tie").Accepts(new TiePilotFormat()));
+        Assert.True(GameCatalog.Variant("tie95").Accepts(new TiePilotFormat()));
     }
 }

@@ -65,6 +65,14 @@ public sealed class XWingPilotFormat : PilotFormat
         "Mine (type 3)", "Mine (type 4)", "Satellite", "Nav Buoy", "Probe",
     };
 
+    /// <summary>Operations per tour (OpenXW shipext.h); tours 6-8 have none.</summary>
+    internal static readonly int[] TourOperationCounts = { 12, 12, 14, 20, 20, 0, 0, 0 };
+
+    internal static readonly string[] TourNames =
+    {
+        "Tour 1", "Tour 2", "Tour 3", "Tour 4 (Imperial Pursuit)", "Tour 5 (B-Wing)", "Tour 6", "Tour 7", "Tour 8",
+    };
+
     internal static readonly IReadOnlyList<ChoiceOption> TourStatus = Choices.Indexed("Not started", "Active", "Incomplete (pilot lost during tour)", "Completed");
 
     private static RecordSchema BuildSchema(XWingEdition edition)
@@ -177,7 +185,7 @@ public sealed class XWingPilotFormat : PilotFormat
                 var t = tour;
                 using (b.Group($"Tour {t + 1} scores"))
                 {
-                    b.Array($"tour.score[{t}]", BinaryKind.UInt32, 25, i => $"Operation {i + 1} score", positive);
+                    b.Array($"tour.score[{t}]", BinaryKind.UInt32, 25, i => $"Mission {i + 1} score", positive);
                 }
             }
         }
@@ -279,6 +287,46 @@ internal sealed class XWingPilotDocument : BinaryPilotDocument
             {
                 yield return CommonRules.Odd(
                     $"Tour {t + 1} is not started but has {progress} completed operations.", Field($"tour.progress[{t}]"));
+            }
+        }
+
+        for (var t = 0; t < 8; t++)
+        {
+            var status = Field($"tour.status[{t}]");
+            var progress = Field($"tour.progress[{t}]");
+            var count = XWingPilotFormat.TourOperationCounts[t];
+            if (count == 0 && (status.GetInteger() != 0 || progress.GetInteger() != 0))
+            {
+                yield return CommonRules.Broken($"Tour {t + 1} does not exist in any edition of X-Wing, so it cannot be started.", status, progress);
+            }
+            else if (count > 0 && progress.GetInteger() > count)
+            {
+                yield return CommonRules.Broken($"Tour {t + 1} has only {count} operations, so at most {count} can be completed.", progress);
+            }
+            else if (count > 0 && status.GetInteger() == 3 && progress.GetInteger() < count)
+            {
+                yield return CommonRules.Odd($"Tour {t + 1} is marked completed but only {progress.GetInteger()} of its {count} operations are.", progress);
+            }
+        }
+
+        if (activeTours.Count == 1 && activeTours[0] < 5 &&
+            Int("tour.currentOperation") >= XWingPilotFormat.TourOperationCounts[activeTours[0]])
+        {
+            yield return CommonRules.Broken(
+                $"The current operation is beyond the last operation of Tour {activeTours[0] + 1}.",
+                Field("tour.currentOperation"));
+        }
+
+        if (Edition is { } edition && edition.BaseTours < 5)
+        {
+            for (var t = edition.BaseTours; t < 5; t++)
+            {
+                if (Int($"tour.status[{t}]") != 0)
+                {
+                    yield return CommonRules.Odd(
+                        $"{XWingPilotFormat.TourNames[t]} is not part of the {edition.Name}; it needs the {(t == 3 ? "Imperial Pursuit" : "B-Wing")} add-on disk.",
+                        Field($"tour.status[{t}]"));
+                }
             }
         }
 
