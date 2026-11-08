@@ -26,6 +26,26 @@ the .NET runtime is built into the program.
 
 Close the game before editing its pilots — most of them write the pilot file when they exit.
 
+## Using it
+
+The left side is a game menu: pick a game, then a version (the 1998 or DOS edition, Balance of Power, XWAUP, OpenXW…),
+and the pilots in that version's folder are listed. Click one to edit it; **Back to game menu** takes you back.
+
+Installed games are found automatically:
+
+* **From XWVM's own settings** — the X-Wing and TIE Fighter folders you gave XWVM (`gameVariantConfigurations` in its
+  config in `%APPDATA%\XWVM`).
+* **XWVM pilots** — XWVM's pilot folder, `%APPDATA%\XWVM\pilots` (`~/.config/XWVM/pilots` on Linux/macOS).
+* **Steam libraries, GOG (registry and default folders), Heroic, common game folders and classic CD installs.**
+  Inside an X-Wing install, the 1998 and DOS editions are told apart by their files, using the same markers as XWVM
+  (`XWING95.EXE` + `X-Wing Data` for 1998; `BWING.EXE` / `game.gog` / `game.fil` for DOS).
+* **OpenXW, OpenTIE, OpenXvT, OpenXWA** — their user folders (`TotallyOpen/<App>` in the SDL preference path). Anything that is not found, or found in the wrong
+place, can be set in **Settings**, which lists every game and version with **Browse…**, **Automatic** and **None** buttons.
+Settings are stored in your user settings folder (`%APPDATA%\StarfighterCompanion` on Windows,
+`~/.config/StarfighterCompanion` on Linux and macOS).
+
+You can still open any pilot file directly with **Open a pilot file…** or by dragging it onto the window.
+
 ## How it keeps your pilot safe
 
 * **Only known layouts are opened.** A file is recognised by its extension and exact size (or, for XWVM, its XML root).
@@ -60,7 +80,8 @@ Pushing a tag such as `v0.1.0` makes GitHub Actions build all platforms and atta
 
 ### Project layout
 
-* `src/StarfighterCompanion.Core` — file formats, validation rules. No UI code; this is where the knowledge lives.
+* `src/StarfighterCompanion.Core` — file formats, validation rules, game library. No UI code; this is where the knowledge lives.
+  * `Library/` — the list of games and versions, automatic install detection, pilot scanning and settings.
   * `Binary/` — a small layout engine: each binary format is described field by field, and the build fails if
     a single byte is unaccounted for.
   * `Formats/<Game>/` — one file per game with its layout, value limits and rules.

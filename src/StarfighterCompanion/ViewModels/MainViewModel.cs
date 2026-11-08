@@ -8,7 +8,7 @@ using StarfighterCompanion.Views;
 
 namespace StarfighterCompanion.ViewModels;
 
-public sealed class MainViewModel : ViewModelBase
+public sealed partial class MainViewModel : ViewModelBase
 {
     private const int MaxSearchResults = 3000;
 
@@ -31,6 +31,7 @@ public sealed class MainViewModel : ViewModelBase
         RevertCommand = new Command(RevertAsync, () => _document is not null && _path is not null);
         AboutCommand = new Command(AboutAsync);
         ExitCommand = new Command(() => _window.Close());
+        InitializeLibrary();
     }
 
     public Command OpenCommand { get; }
@@ -169,6 +170,7 @@ public sealed class MainViewModel : ViewModelBase
         {
             var document = PilotFormats.Open(path);
             Load(document, path);
+            ShowSettings = false;
             Status = $"Opened {Path.GetFileName(path)}.";
         }
         catch (UnsupportedPilotFileException ex)
@@ -345,8 +347,10 @@ public sealed class MainViewModel : ViewModelBase
 
         Revalidate();
         RaiseDocumentTitles();
+        Raise(nameof(SelectedPilotItem));
         Raise(nameof(HasDocument));
         Raise(nameof(HasNoDocument));
+        RaiseContentState();
         SaveCommand.RaiseCanExecuteChanged();
         SaveAsCommand.RaiseCanExecuteChanged();
         RevertCommand.RaiseCanExecuteChanged();
