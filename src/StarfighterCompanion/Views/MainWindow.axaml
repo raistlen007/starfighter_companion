@@ -1,0 +1,134 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:StarfighterCompanion.ViewModels"
+        x:Class="StarfighterCompanion.Views.MainWindow"
+        x:DataType="vm:MainViewModel"
+        Title="{Binding WindowTitle}"
+        Width="1180" Height="780" MinWidth="820" MinHeight="520"
+        WindowStartupLocation="CenterScreen"
+        DragDrop.AllowDrop="True">
+
+  <Window.KeyBindings>
+    <KeyBinding Gesture="Ctrl+O" Command="{Binding OpenCommand}" />
+    <KeyBinding Gesture="Ctrl+S" Command="{Binding SaveCommand}" />
+    <KeyBinding Gesture="Ctrl+Shift+S" Command="{Binding SaveAsCommand}" />
+  </Window.KeyBindings>
+
+  <DockPanel>
+    <Menu DockPanel.Dock="Top">
+      <MenuItem Header="_File">
+        <MenuItem Header="_Open…" InputGesture="Ctrl+O" Command="{Binding OpenCommand}" />
+        <MenuItem Header="_Save" InputGesture="Ctrl+S" Command="{Binding SaveCommand}" />
+        <MenuItem Header="Save _As…" InputGesture="Ctrl+Shift+S" Command="{Binding SaveAsCommand}" />
+        <MenuItem Header="_Revert to saved" Command="{Binding RevertCommand}" />
+        <Separator />
+        <MenuItem Header="E_xit" Command="{Binding ExitCommand}" />
+      </MenuItem>
+      <MenuItem Header="_Help">
+        <MenuItem Header="_About" Command="{Binding AboutCommand}" />
+      </MenuItem>
+    </Menu>
+
+    <!-- Status bar -->
+    <Border DockPanel.Dock="Bottom" Padding="10,4" Background="#1AFFFFFF">
+      <TextBlock Text="{Binding Status}" TextTrimming="CharacterEllipsis" />
+    </Border>
+
+    <!-- Welcome screen -->
+    <Grid IsVisible="{Binding HasNoDocument}">
+      <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="14" MaxWidth="560">
+        <TextBlock Text="Starfighter Companion" FontSize="30" FontWeight="SemiBold" HorizontalAlignment="Center" />
+        <TextBlock TextWrapping="Wrap" TextAlignment="Center" Classes="muted"
+                   Text="Edit pilot files for X-Wing, TIE Fighter, X-Wing vs. TIE Fighter, Balance of Power, X-Wing Alliance (with XWAUP and TFTC), the OpenXW family and XWVM." />
+        <Button Content="Open a pilot file…" HorizontalAlignment="Center" Padding="20,8" Command="{Binding OpenCommand}" />
+        <TextBlock HorizontalAlignment="Center" Classes="muted" Text="…or drag and drop it onto this window." />
+        <TextBlock TextWrapping="Wrap" TextAlignment="Center" Classes="muted" FontSize="12"
+                   Text="Supported: .plt (X-Wing, XvT, XWA), .tfr (TIE Fighter), .pl2 (Balance of Power), .vmpilot (XWVM). Close the game before editing its pilots." />
+      </StackPanel>
+    </Grid>
+
+    <!-- Editor -->
+    <Grid IsVisible="{Binding HasDocument}" RowDefinitions="Auto,*,5,170">
+
+      <Border Grid.Row="0" Padding="14,10" Background="#0FFFFFFF">
+        <StackPanel Spacing="2">
+          <TextBlock Text="{Binding PilotTitle}" FontSize="22" FontWeight="SemiBold" />
+          <TextBlock Text="{Binding FormatTitle}" />
+          <TextBlock Text="{Binding FilePath}" Classes="muted" FontSize="12" TextTrimming="PathSegmentEllipsis" />
+          <ItemsControl ItemsSource="{Binding Notes}" Margin="0,4,0,0">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="x:String">
+                <TextBlock Text="{Binding StringFormat='ℹ {0}'}" TextWrapping="Wrap" FontSize="12" Classes="muted" />
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
+
+      <Grid Grid.Row="1" ColumnDefinitions="300,5,*">
+        <TreeView Grid.Column="0" ItemsSource="{Binding Groups}" SelectedItem="{Binding SelectedGroup}" Margin="4">
+          <TreeView.ItemTemplate>
+            <TreeDataTemplate x:DataType="vm:GroupNode" ItemsSource="{Binding Children}">
+              <TextBlock Text="{Binding Title}" />
+            </TreeDataTemplate>
+          </TreeView.ItemTemplate>
+        </TreeView>
+
+        <GridSplitter Grid.Column="1" ResizeDirection="Columns" />
+
+        <DockPanel Grid.Column="2" Margin="6,4,8,4">
+          <TextBox x:Name="SearchBox" DockPanel.Dock="Top" Watermark="Search every value (Ctrl+F)…" Text="{Binding SearchText}" />
+          <TextBlock DockPanel.Dock="Top" Text="{Binding ListHeader}" FontWeight="SemiBold" Margin="2,8,0,6" TextTrimming="CharacterEllipsis" />
+          <TextBlock DockPanel.Dock="Top" Text="{Binding EmptyListHint}" Classes="muted" Margin="2,0,0,0"
+                     IsVisible="{Binding EmptyListHint, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+          <ListBox x:Name="FieldList" ItemsSource="{Binding VisibleFields}" Background="Transparent">
+            <ListBox.Styles>
+              <Style Selector="ListBoxItem">
+                <Setter Property="Padding" Value="6,4" />
+              </Style>
+            </ListBox.Styles>
+            <ListBox.ItemTemplate>
+              <DataTemplate x:DataType="vm:FieldViewModel">
+                <Grid ColumnDefinitions="*,280" ToolTip.Tip="{Binding Help}">
+                  <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,12,0">
+                    <TextBlock Text="{Binding Label}" TextWrapping="Wrap" Classes.modified="{Binding IsModified}" />
+                    <TextBlock Text="{Binding GroupPath}" IsVisible="{Binding ShowGroup}" Classes="muted" FontSize="11" />
+                    <TextBlock Text="{Binding Error}" IsVisible="{Binding HasError}" Classes="error" TextWrapping="Wrap" />
+                  </StackPanel>
+                  <Panel Grid.Column="1" VerticalAlignment="Center">
+                    <TextBox IsVisible="{Binding IsInteger}" IsEnabled="{Binding IsEditable}"
+                             Text="{Binding IntegerText, UpdateSourceTrigger=LostFocus}" HorizontalContentAlignment="Right" />
+                    <ComboBox IsVisible="{Binding IsChoice}" IsEnabled="{Binding IsEditable}" HorizontalAlignment="Stretch"
+                              ItemsSource="{Binding ChoiceItems}" SelectedItem="{Binding SelectedChoice}" />
+                    <CheckBox IsVisible="{Binding IsFlag}" IsEnabled="{Binding IsEditable}" IsChecked="{Binding FlagValue}" />
+                    <TextBox IsVisible="{Binding IsText}" IsEnabled="{Binding IsEditable}"
+                             Text="{Binding TextValue, UpdateSourceTrigger=LostFocus}" />
+                  </Panel>
+                </Grid>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+        </DockPanel>
+      </Grid>
+
+      <GridSplitter Grid.Row="2" ResizeDirection="Rows" />
+
+      <DockPanel Grid.Row="3" Margin="8,4">
+        <TextBlock DockPanel.Dock="Top" Text="{Binding IssueSummary}" FontWeight="SemiBold" Margin="2,0,0,4" />
+        <ListBox ItemsSource="{Binding Issues}" SelectedItem="{Binding SelectedIssue}" Background="Transparent">
+          <ListBox.ItemTemplate>
+            <DataTemplate x:DataType="vm:IssueViewModel">
+              <StackPanel Orientation="Horizontal" Spacing="8">
+                <TextBlock Text="{Binding Icon}" />
+                <StackPanel>
+                  <TextBlock Text="{Binding Message}" TextWrapping="Wrap" />
+                  <TextBlock Text="{Binding Location}" Classes="muted" FontSize="11" />
+                </StackPanel>
+              </StackPanel>
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+      </DockPanel>
+    </Grid>
+  </DockPanel>
+</Window>
