@@ -126,9 +126,9 @@ public sealed partial class MainViewModel : ViewModelBase
         get => _selectedIssue;
         set
         {
-            if (Set(ref _selectedIssue, value) && value?.Issue.Field is { } field)
+            if (Set(ref _selectedIssue, value) && value?.Issue.Field is { } editableField)
             {
-                GoTo(field);
+                GoTo(editableField);
             }
         }
     }
