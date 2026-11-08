@@ -162,8 +162,9 @@ public static class GameCatalog
                 new VariantDefinition
                 {
                     Id = "xwvm", GameId = Xwvm, Name = "XWVM",
-                    Description = "The folder holding XWVM's .vmpilot files (in your user data, not the game folder).",
+                    Description = "XWVM keeps its .vmpilot files in its user folder: %APPDATA%\\XWVM\\pilots on Windows, ~/.config/XWVM/pilots on Linux and macOS.",
                     Accepts = f => f is XwvmPilotFormat,
+                    SearchDepth = 0,
                 },
             },
         },

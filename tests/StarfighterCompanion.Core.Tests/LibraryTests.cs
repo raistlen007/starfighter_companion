@@ -74,6 +74,37 @@ public sealed class LibraryTests : IDisposable
     }
 
     [Fact]
+    public void Both_x_wing_editions_are_found_by_their_files()
+    {
+        // Layout like the Steam/GOG release: one install holding the 1998 edition and the 1994 DOS edition.
+        var install = Path.Combine(_root, "STAR WARS X-Wing");
+        var win98 = Directory.CreateDirectory(Path.Combine(install, "XWING98")).FullName;
+        Directory.CreateDirectory(Path.Combine(win98, "X-Wing Data", "MISSION"));
+        File.WriteAllBytes(Path.Combine(win98, "XWING95.EXE"), Array.Empty<byte>());
+        var dos = Directory.CreateDirectory(Path.Combine(install, "XWING94")).FullName;
+        File.WriteAllBytes(Path.Combine(dos, "game.gog"), Array.Empty<byte>());
+        File.WriteAllBytes(Path.Combine(dos, "BWING.EXE"), Array.Empty<byte>());
+
+        var finder = new InstallFinder();
+        finder.ExtraSearchRoots.Add(_root);
+        var found = finder.DetectAll();
+
+        Assert.Equal(win98, found.Single(d => d.VariantId == "xwing98").Folder);
+        Assert.Equal(dos, found.Single(d => d.VariantId == "xwingdos").Folder);
+    }
+
+    [Theory]
+    [InlineData("xwing98_steam", "xwing98")]
+    [InlineData("xwing98_gog", "xwing98")]
+    [InlineData("xwing94_gog_german", "xwingdos")]
+    [InlineData("xwing93", "xwingdos")]
+    [InlineData("tie95_steam", "tie")]
+    [InlineData("tie98", "tie")]
+    [InlineData("none", null)]
+    public void Xwvm_game_variants_map_to_editor_versions(string xwvmVariant, string? expected) =>
+        Assert.Equal(expected, InstallFinder.MapXwvmVariant(xwvmVariant));
+
+    [Fact]
     public void User_choice_beats_detection_and_survives_reload()
     {
         var settingsPath = Path.Combine(_root, "settings.json");

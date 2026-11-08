@@ -7,8 +7,9 @@ namespace StarfighterCompanion.Core.Library;
 public sealed record DetectedFolder(string VariantId, string Folder, string Source);
 
 /// <summary>
-/// Looks for installed games: Steam libraries, GOG (registry and default folders), Heroic/Lutris style
-/// game folders, classic CD install locations, the OpenXW family's user folders and XWVM's pilot folder.
+/// Looks for installed games: the install folders configured in XWVM, Steam libraries, GOG (registry and
+/// default folders), Heroic style game folders, classic CD install locations, the OpenXW family's user folders
+/// (SDL preference path TotallyOpen/&lt;App&gt;) and XWVM's pilot folder (ApplicationData/XWVM/pilots).
 /// Detection only suggests folders; anything the user set in Settings wins.
 /// </summary>
 public sealed partial class InstallFinder
@@ -45,14 +46,24 @@ public sealed partial class InstallFinder
             }
         }
 
+        // Install folders XWVM itself was pointed at: the most reliable source when XWVM is installed.
+        foreach (var (variant, folder) in XwvmConfiguredInstalls())
+        {
+            Add(variant, folder, "XWVM settings");
+        }
+
         foreach (var (dir, source, nameHint) in CandidateGameFolders())
         {
             var name = nameHint ?? Path.GetFileName(dir.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
             switch (Classify(name))
             {
                 case GameKind.XWing:
-                    Add("xwing98", dir, source);
-                    Add("xwingdos", dir, source);
+                    // Steam and GOG ship both editions; find each edition's own folder by its files
+                    // (the same markers XWVM uses to recognise them).
+                    var win98 = FindFolderWith(dir, IsXWing98Folder);
+                    var dos = FindFolderWith(dir, IsXWingDosFolder);
+                    Add("xwing98", win98 ?? dir, source);
+                    Add("xwingdos", dos ?? dir, source);
                     break;
                 case GameKind.Tie:
                     Add("tie", dir, source);
@@ -288,63 +299,123 @@ public sealed partial class InstallFinder
         }
     }
 
+    /// <summary>XWVM's user folder: <c>Environment.SpecialFolder.ApplicationData/XWVM</c> (MainConfiguration.UserConfigPath).</summary>
+    internal static string XwvmUserFolder =>
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "XWVM");
+
     private IEnumerable<string> XwvmPilotFolders()
     {
-        // XWVM is a Unity game: its data lives under Unity's persistent data path
-        // (<base>/<company>/<product>/). Look a few levels down for .vmpilot files.
-        var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-        var bases = new List<string>();
-        if (OperatingSystem.IsWindows())
-        {
-            bases.Add(Path.Combine(home, "AppData", "LocalLow"));
-        }
-        else if (OperatingSystem.IsMacOS())
-        {
-            bases.Add(Path.Combine(home, "Library", "Application Support"));
-        }
-        else
-        {
-            bases.Add(Path.Combine(home, ".config", "unity3d"));
-        }
-
-        bases.Add(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "XWVM"));
-
-        foreach (var b in bases.Where(_directoryExists))
-        {
-            foreach (var company in _subdirectories(b).Where(d => Path.GetFileName(d).Contains("xwvm", StringComparison.OrdinalIgnoreCase) ||
-                                                                 _subdirectories(d).Any(p => Path.GetFileName(p).Contains("xwvm", StringComparison.OrdinalIgnoreCase)) ||
-                                                                 Path.GetFileName(d).Equals("XWVM", StringComparison.OrdinalIgnoreCase)))
-            {
-                foreach (var folder in FoldersWithFiles(company, "*.vmpilot", depth: 3))
-                {
-                    yield return folder;
-                }
-            }
-
-            foreach (var folder in FoldersWithFiles(b, "*.vmpilot", depth: 0))
-            {
-                yield return folder;
-            }
-        }
+        // MainConfiguration.PilotFilePath = UserConfigPath/pilots.
+        yield return Path.Combine(XwvmUserFolder, "pilots");
     }
 
-    private static IEnumerable<string> FoldersWithFiles(string root, string pattern, int depth)
+    /// <summary>
+    /// Reads XWVM's configuration (JSON in its user folder) for the game install paths the player gave it:
+    /// <c>gameVariantConfigurations[].variant / installPath</c>.
+    /// </summary>
+    private IEnumerable<(string Variant, string Folder)> XwvmConfiguredInstalls()
     {
+        var results = new List<(string, string)>();
+        if (!_directoryExists(XwvmUserFolder))
+        {
+            return results;
+        }
+
+        IEnumerable<string> files;
         try
         {
-            return Directory.EnumerateFiles(root, pattern, new EnumerationOptions
-                {
-                    RecurseSubdirectories = depth > 0,
-                    MaxRecursionDepth = depth,
-                    IgnoreInaccessible = true,
-                })
-                .Select(f => Path.GetDirectoryName(f)!)
-                .Distinct()
-                .ToList();
+            files = Directory.EnumerateFiles(XwvmUserFolder, "*.json").ToList();
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            return Array.Empty<string>();
+            return results;
+        }
+
+        foreach (var file in files)
+        {
+            try
+            {
+                using var json = System.Text.Json.JsonDocument.Parse(File.ReadAllText(file));
+                if (!json.RootElement.TryGetProperty("gameVariantConfigurations", out var configs) ||
+                    configs.ValueKind != System.Text.Json.JsonValueKind.Array)
+                {
+                    continue;
+                }
+
+                foreach (var config in configs.EnumerateArray())
+                {
+                    var variant = config.TryGetProperty("variant", out var v) ? v.ToString() : null;
+                    var path = config.TryGetProperty("installPath", out var p) ? p.GetString() : null;
+                    var ours = MapXwvmVariant(variant);
+                    if (ours is not null && !string.IsNullOrWhiteSpace(path))
+                    {
+                        results.Add((ours, path));
+                    }
+                }
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException or InvalidOperationException)
+            {
+                // Not XWVM's configuration, or unreadable.
+            }
+        }
+
+        return results;
+    }
+
+    /// <summary>Maps XWVM's GameVariant names to this editor's versions.</summary>
+    internal static string? MapXwvmVariant(string? variant) => variant?.ToLowerInvariant() switch
+    {
+        null => null,
+        var v when v.StartsWith("xwing98") => "xwing98",
+        var v when v.StartsWith("xwing93") || v.StartsWith("xwing94") => "xwingdos",
+        var v when v.StartsWith("tie") => "tie",
+        _ => null,
+    };
+
+    /// <summary>1998 edition: XWING95.EXE next to "X-Wing Data" (XWVM's XW98 resource finders).</summary>
+    internal bool IsXWing98Folder(string dir) =>
+        FileExists(dir, "XWING95.EXE") && _subdirectories(dir).Any(d => string.Equals(Path.GetFileName(d), "X-Wing Data", StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>DOS editions: the B-Wing executable, or the CD image of the GOG (game.gog) / Steam (game.fil) 1994 edition.</summary>
+    internal bool IsXWingDosFolder(string dir) =>
+        FileExists(dir, "BWING.EXE") || FileExists(dir, "XWING.EXE") || FileExists(dir, "game.gog") || FileExists(dir, "game.fil");
+
+    /// <summary>The folder itself or a sub-folder up to two levels down that satisfies <paramref name="test"/>.</summary>
+    private string? FindFolderWith(string root, Func<string, bool> test)
+    {
+        if (test(root))
+        {
+            return root;
+        }
+
+        foreach (var child in _subdirectories(root))
+        {
+            if (test(child))
+            {
+                return child;
+            }
+
+            foreach (var grandchild in _subdirectories(child))
+            {
+                if (test(grandchild))
+                {
+                    return grandchild;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private static bool FileExists(string dir, string name)
+    {
+        try
+        {
+            return Directory.EnumerateFiles(dir, name, new EnumerationOptions { MatchCasing = MatchCasing.CaseInsensitive, IgnoreInaccessible = true }).Any();
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return false;
         }
     }
 

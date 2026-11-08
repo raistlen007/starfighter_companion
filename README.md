@@ -31,8 +31,15 @@ Close the game before editing its pilots — most of them write the pilot file w
 The left side is a game menu: pick a game, then a version (the 1998 or DOS edition, Balance of Power, XWAUP, OpenXW…),
 and the pilots in that version's folder are listed. Click one to edit it; **Back to game menu** takes you back.
 
-Installed games are found automatically (Steam libraries, GOG, Heroic and common game folders, classic CD install
-folders, the OpenXW family's user folders and XWVM's pilot folder). Anything that is not found, or found in the wrong
+Installed games are found automatically:
+
+* **From XWVM's own settings** — the X-Wing and TIE Fighter folders you gave XWVM (`gameVariantConfigurations` in its
+  config in `%APPDATA%\XWVM`).
+* **XWVM pilots** — XWVM's pilot folder, `%APPDATA%\XWVM\pilots` (`~/.config/XWVM/pilots` on Linux/macOS).
+* **Steam libraries, GOG (registry and default folders), Heroic, common game folders and classic CD installs.**
+  Inside an X-Wing install, the 1998 and DOS editions are told apart by their files, using the same markers as XWVM
+  (`XWING95.EXE` + `X-Wing Data` for 1998; `BWING.EXE` / `game.gog` / `game.fil` for DOS).
+* **OpenXW, OpenTIE, OpenXvT, OpenXWA** — their user folders (`TotallyOpen/<App>` in the SDL preference path). Anything that is not found, or found in the wrong
 place, can be set in **Settings**, which lists every game and version with **Browse…**, **Automatic** and **None** buttons.
 Settings are stored in your user settings folder (`%APPDATA%\StarfighterCompanion` on Windows,
 `~/.config/StarfighterCompanion` on Linux and macOS).
