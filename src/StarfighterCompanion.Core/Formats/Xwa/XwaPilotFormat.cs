@@ -1,0 +1,251 @@
+using StarfighterCompanion.Core.Binary;
+using StarfighterCompanion.Core.Formats.XvT;
+using StarfighterCompanion.Core.Model;
+
+namespace StarfighterCompanion.Core.Formats.Xwa;
+
+/// <summary>
+/// X-Wing Alliance pilot file (<c>.plt</c>, 152,076 bytes). Also used by the X-Wing Alliance Upgrade (XWAUP),
+/// the TIE Fighter Total Conversion (TFTC) and OpenXWA.
+/// Layout from OpenXWA (PilotData in src/xwa/frontend/mission_setup.h), GPL-3.0.
+/// </summary>
+public sealed class XwaPilotFormat : PilotFormat
+{
+    public const int RecordSize = 152076;
+    public const int CraftTypes = 512;
+    public const int FlightGroups = 192;
+
+    private static readonly Lazy<RecordSchema> SchemaInstance = new(BuildSchema);
+
+    public override string Game => "Star Wars: X-Wing Alliance";
+
+    public override string Name => "X-Wing Alliance pilot (.plt) - also XWAUP / TFTC";
+
+    public override IReadOnlyList<string> Extensions { get; } = new[] { ".plt" };
+
+    public override string Signature => $"{RecordSize:N0} bytes";
+
+    public static RecordSchema Schema => SchemaInstance.Value;
+
+    public override bool Matches(string fileName, ReadOnlySpan<byte> data) =>
+        HasExtension(fileName, Extensions) && data.Length == RecordSize;
+
+    public override PilotDocument Open(string fileName, byte[] data) => new XwaPilotDocument(this, data);
+
+    internal static string Craft(int i) => $"Craft type {i}";
+
+    private static RecordSchema BuildSchema()
+    {
+        var b = new LayoutBuilder();
+        var positive = FieldOptions.NonNegative;
+
+        XvtCommon.Header(b); // name, total score + 5 ints (same size as XWA's gap/unk/players/mode block)
+        b.Skip(4 + 4 + 4 * 7); // team, mission directory, selected mission per directory
+
+        using (b.Group("Multiplayer"))
+        {
+            b.Text("gameName", "Game name", 32);
+            b.Text("hostName", "Host name", 32);
+        }
+
+        b.Skip(4);
+
+        using (b.Group("Rating"))
+        {
+            b.I32("promoPoints", "Promotion points", positive);
+            b.I32("demotionPoints", "Demotion points", positive);
+            b.Skip(4); // pending promotion announcement
+            b.I32("nextPromotionPercent", "Progress to next rating (%)", FieldOptions.Range(0, 100));
+        }
+
+        using (b.Scope("main", "Career statistics"))
+        {
+            Stats(b);
+        }
+
+        XvtCommon.LastMission(b, FlightGroups);
+        b.Skip(20076); // object statistics of the last mission
+        b.Expect(44282, "tour of duty missions");
+
+        MissionRecords(b, "tod", "Campaign (Tour of Duty) missions");
+        MissionRecords(b, "combat", "Combat Chamber missions");
+
+        using (b.Group("Tech library"))
+        {
+            b.Array("craftKnown", BinaryKind.UInt8, CraftTypes, i => $"{Craft(i)} unlocked", FieldOptions.AsFlag);
+        }
+
+        b.Skip(4); // "new craft added to tech room" announcement
+
+        using (b.Group("Rating"))
+        {
+            b.I32("rating", "Rating", FieldOptions.Range(0, 24, "0 to 24. The game keeps one mission counter per rating, so higher values would corrupt the file."));
+            b.I32("rank", "Rank", FieldOptions.Range(0, 8, "0 to 8."));
+            b.I32("kalidor", "Kalidor Crescent level", FieldOptions.Range(0, 6));
+            b.I32("missionsPlayed", "Missions played", positive);
+            b.Array("missionsPerRating", BinaryKind.Int32, 25, i => $"Missions played at rating {i}", positive);
+            b.Text("ratingName", "Rating name", 32, new FieldOptions { Help = "Text shown for the rating; normally set by the game." });
+        }
+
+        b.Skip(4 * 4);  // pending announcements (Emkay, family, tactical officer)
+        b.Skip(100 * 8); // network players of the last mission
+        b.Skip(28 * 10); // team results of the last mission
+        b.Skip(4);       // selected faction record
+        b.Expect(70526, "faction records");
+
+        b.Repeat(4, "faction", XvtCommon.FactionLabel, _ =>
+        {
+            using (b.Group("Summary"))
+            {
+                b.I32("missionsPlayed", "Missions played", positive);
+            }
+
+            b.Skip(4 + 4 + 4 * 7 + 32 + 4);
+            using (b.Group("Awards"))
+            {
+                b.Array("awardsA", BinaryKind.Int32, 6, i => $"Award counter A, level {i + 1}", positive);
+                b.Skip(24);
+                b.Array("awardsB", BinaryKind.Int32, 6, i => $"Award counter B, level {i + 1}", positive);
+                b.Skip(24);
+                b.Array("kalidorPoints", BinaryKind.Int32, 4, i => $"Kalidor Crescent points {i + 1}", positive);
+            }
+
+            b.Skip(12);
+            using (b.Group("Summary"))
+            {
+                b.I32("score", "Score");
+                b.Skip(4);
+                b.I32("bonusScore", "Bonus score");
+                b.I32("totalScore", "Total score");
+            }
+
+            using (b.Scope("stats", "Statistics"))
+            {
+                Stats(b);
+            }
+        });
+
+        b.Expect(151694, "e-mails");
+        b.Skip(100 + 1); // e-mail read status and sort order
+
+        using (b.Group("Campaign"))
+        {
+            b.Skip(4); // campaign mode
+            b.I32("skipsRemaining", "Mission skips remaining", FieldOptions.Range(0, 3));
+        }
+
+        b.Skip(4 + 256 + 8 + 4 + 1); // regions, mission file name, proving grounds per player, melee index, hangar type
+
+        return b.Build(RecordSize);
+    }
+
+    private static void Stats(LayoutBuilder b)
+    {
+        var types = XvtCommon.MissionTypes;
+        void PerType(string id, string label, FieldOptions o)
+        {
+            using (b.Group("Totals"))
+            {
+                b.Array(id, BinaryKind.Int32, 3, i => $"{label} (type {i + 1})", o);
+            }
+        }
+
+        void PerTypeArray(string id, string label, int count, Func<int, string> item)
+        {
+            for (var t = 0; t < 3; t++)
+            {
+                var type = t;
+                using (b.Group($"{label} (type {type + 1})"))
+                {
+                    b.Array($"{id}[{type}]", BinaryKind.Int32, count, item, FieldOptions.NonNegative);
+                }
+            }
+        }
+
+        _ = types;
+        PerType("scoreByType", "Score", FieldOptions.None);
+        PerType("played", "Missions played", FieldOptions.NonNegative);
+        PerType("kills", "Kills", FieldOptions.NonNegative);
+        PerType("friendlyKills", "Friendly craft killed", FieldOptions.NonNegative);
+        PerTypeArray("killsByCraft", "Kills by craft", CraftTypes, Craft);
+        PerTypeArray("sharedKillsByCraft", "Shared kills by craft", CraftTypes, Craft);
+        PerTypeArray("assistsByCraft", "Assists by craft", CraftTypes, Craft);
+        PerTypeArray("killsOnPlayerRating", "Kills on players by rating", 25, i => $"Rating {i}");
+        PerTypeArray("sharedKillsOnPlayerRating", "Shared kills on players by rating", 25, i => $"Rating {i}");
+        PerTypeArray("assistsOnPlayerRating", "Assists on players by rating", 25, i => $"Rating {i}");
+        PerTypeArray("killsOnAiRating", "Kills on AI by skill", 6, i => XvtCommon.AiRatings[i]);
+        PerTypeArray("sharedKillsOnAiRating", "Shared kills on AI by skill", 6, i => XvtCommon.AiRatings[i]);
+        PerTypeArray("assistsOnAiRating", "Assists on AI by skill", 6, i => XvtCommon.AiRatings[i]);
+        PerType("inspections", "Special craft inspected", FieldOptions.NonNegative);
+        PerType("energyHits", "Laser/ion hits", FieldOptions.NonNegative);
+        PerType("energyFired", "Laser/ion shots fired", FieldOptions.NonNegative);
+        PerType("warheadHits", "Warhead hits", FieldOptions.NonNegative);
+        PerType("warheadsFired", "Warheads fired", FieldOptions.NonNegative);
+        PerType("losses", "Craft lost", FieldOptions.NonNegative);
+        PerType("lossesCollision", "Craft lost in collisions", FieldOptions.NonNegative);
+        PerType("lossesStarship", "Craft lost to starships", FieldOptions.NonNegative);
+        PerType("lossesMine", "Craft lost to mines", FieldOptions.NonNegative);
+        PerTypeArray("killedByPlayerRating", "Killed by players by rating", 25, i => $"Rating {i}");
+        PerTypeArray("killedByAiRating", "Killed by AI by skill", 6, i => XvtCommon.AiRatings[i]);
+    }
+
+    private static void MissionRecords(LayoutBuilder b, string id, string group)
+    {
+        var positive = FieldOptions.NonNegative;
+        using (b.Group(group))
+        {
+            b.Repeat(255, id, _ => null, i =>
+            {
+                var m = $"Mission {i}";
+                b.Skip(4);
+                b.I32("flown", $"{m}: times flown", positive);
+                b.I32("first", $"{m}: 1st places", positive);
+                b.I32("second", $"{m}: 2nd places", positive);
+                b.I32("third", $"{m}: 3rd places", positive);
+                b.I32("completed", $"{m}: times completed", positive);
+                b.I32("failed", $"{m}: times failed", positive);
+                b.I32("bestScore", $"{m}: best score");
+                b.U32("bestTime", $"{m}: best time");
+                b.U32("bestPlacement", $"{m}: best placement");
+                b.U32("award", $"{m}: award");
+                b.U32("bestBonus", $"{m}: best bonus");
+            });
+        }
+    }
+}
+
+internal sealed class XwaPilotDocument : BinaryPilotDocument
+{
+    private readonly XwaPilotFormat _format;
+
+    public XwaPilotDocument(XwaPilotFormat format, byte[] data)
+        : base(data, XwaPilotFormat.Schema, 1)
+    {
+        _format = format;
+        Notes.Add("Craft types are listed by number because their names depend on the craft list of your installation (XWAUP and TFTC change it).");
+    }
+
+    public override string GameName => _format.Game;
+
+    public override string FormatName => _format.Name;
+
+    public override string PilotName => Field("name").GetText();
+
+    protected override IEnumerable<ValidationIssue> CheckRules()
+    {
+        if (string.IsNullOrWhiteSpace(PilotName))
+        {
+            yield return CommonRules.Odd("The pilot has no name.", Field("name"));
+        }
+
+        foreach (var issue in XvtCommon.MissionRules(this, "tod", 255))
+        {
+            yield return issue;
+        }
+
+        foreach (var issue in XvtCommon.MissionRules(this, "combat", 255))
+        {
+            yield return issue;
+        }
+    }
+}

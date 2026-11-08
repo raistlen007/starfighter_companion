@@ -1,0 +1,102 @@
+name: Build
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+  pull_request:
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - run: dotnet test -c Release
+
+  publish:
+    needs: test
+    strategy:
+      matrix:
+        include:
+          - rid: win-x64
+            os: windows-latest
+          - rid: linux-x64
+            os: ubuntu-latest
+          - rid: osx-x64
+            os: macos-latest
+          - rid: osx-arm64
+            os: macos-latest
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Publish
+        shell: bash
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          [[ "$GITHUB_REF_TYPE" == "tag" ]] || version="0.0.0-ci"
+          dotnet publish src/StarfighterCompanion -c Release -r ${{ matrix.rid }} -o publish -p:Version="${version%%-*}"
+
+      - name: Package (Windows / Linux)
+        if: ${{ !startsWith(matrix.rid, 'osx') }}
+        shell: bash
+        run: |
+          mkdir -p dist
+          if [[ "${{ matrix.rid }}" == win-* ]]; then
+            cp publish/StarfighterCompanion.exe "dist/StarfighterCompanion-${{ matrix.rid }}.exe"
+          else
+            cp publish/StarfighterCompanion "dist/StarfighterCompanion-${{ matrix.rid }}"
+            chmod +x "dist/StarfighterCompanion-${{ matrix.rid }}"
+          fi
+
+      - name: Package (macOS app bundle)
+        if: ${{ startsWith(matrix.rid, 'osx') }}
+        shell: bash
+        run: |
+          app="Starfighter Companion.app"
+          mkdir -p "$app/Contents/MacOS"
+          cp publish/StarfighterCompanion "$app/Contents/MacOS/StarfighterCompanion"
+          chmod +x "$app/Contents/MacOS/StarfighterCompanion"
+          cat > "$app/Contents/Info.plist" <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0"><dict>
+            <key>CFBundleName</key><string>Starfighter Companion</string>
+            <key>CFBundleDisplayName</key><string>Starfighter Companion</string>
+            <key>CFBundleIdentifier</key><string>io.github.starfighter-companion</string>
+            <key>CFBundleExecutable</key><string>StarfighterCompanion</string>
+            <key>CFBundlePackageType</key><string>APPL</string>
+            <key>CFBundleShortVersionString</key><string>${GITHUB_REF_NAME#v}</string>
+            <key>NSHighResolutionCapable</key><true/>
+          </dict></plist>
+          EOF
+          mkdir -p dist
+          ditto -c -k --keepParent "$app" "dist/StarfighterCompanion-${{ matrix.rid }}.zip"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: StarfighterCompanion-${{ matrix.rid }}
+          path: dist/*
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: publish
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true
