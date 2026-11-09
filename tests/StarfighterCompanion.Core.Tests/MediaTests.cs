@@ -165,7 +165,7 @@ public sealed class MediaTests : IDisposable
         File.WriteAllBytes(Path.Combine(xwa, "xwingalliance.exe"), BuildPe(BuildDib32Bit(4)));
 
         Assert.Equal(4, GameIcons.Find("xwa", xwa)!.Width);
-        Assert.Equal(4, GameIcons.Find("eote", xwa)!.Width);
+        Assert.Equal(4, GameIcons.Find("embers", xwa)!.Width);
         Assert.Null(GameIcons.Find("xwa", Path.Combine(_root, "missing")));
         Assert.Null(GameIcons.Find("xwa", null));
 
@@ -183,11 +183,16 @@ public sealed class MediaTests : IDisposable
     }
 
     [Fact]
-    public void Embers_of_the_Empire_is_an_xwa_version()
+    public void Every_xwa_version_looks_for_the_xwa_program()
     {
-        var variant = GameCatalog.Variant("eote");
-        Assert.Equal(GameCatalog.Xwa, variant.GameId);
-        Assert.True(variant.Accepts(new Formats.Xwa.XwaPilotFormat()));
+        var xwa = Path.Combine(_root, "Mod");
+        Directory.CreateDirectory(xwa);
+        File.WriteAllBytes(Path.Combine(xwa, "unins000.exe"), BuildPe(BuildDib32Bit(8)));
+        File.WriteAllBytes(Path.Combine(xwa, "XWingAlliance.exe"), BuildPe(BuildDib32Bit(4)));
+        foreach (var variant in GameCatalog.Game(GameCatalog.Xwa).Variants.Where(v => v.Id != "openxwa"))
+        {
+            Assert.Equal(4, GameIcons.Find(variant.Id, xwa)!.Width);
+        }
     }
 
     // ---- Builders --------------------------------------------------------------------------------------------------

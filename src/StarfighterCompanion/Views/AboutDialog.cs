@@ -139,7 +139,7 @@ public static class AboutDialog
             {
                 header,
                 Text("A pilot file editor for the X-Wing series: X-Wing, TIE Fighter, X-Wing vs. TIE Fighter, Balance of Power, " +
-                     "X-Wing Alliance (including XWAUP, TFTC and Embers of the Empire), the OpenXW family of reimplementations, and XWVM."),
+                     "X-Wing Alliance (including the XWA Upgrade 2025 and 2020, Embers of the Empire and TFTC Classic and Reimagined), the OpenXW family of reimplementations, and XWVM."),
                 Text("Values are checked as you type, and a pilot that would break the game cannot be saved. Before a file is " +
                      "overwritten, the original is kept as .original.bak and the previous version as .bak."),
                 new ScrollViewer
@@ -159,8 +159,9 @@ public static class AboutDialog
                             Section("X-Wing Alliance Upgrade (XWAUP)",
                                 Text("A long-running community project that replaces X-Wing Alliance's craft, cockpits and effects with " +
                                      "high-detail versions, and adds new craft and missions. It is installed into its own copy of XWA.", 12, 0.85),
-                                Text("Its pilots use the X-Wing Alliance pilot file, so Starfighter Companion edits them as the " +
-                                     "\"X-Wing Alliance Upgrade\" version. Craft numbers it adds are shown by number.", 12, 0.85),
+                                Text("Its pilots use the X-Wing Alliance pilot file. Starfighter Companion has the craft names and " +
+                                     "mission lists of the 2025 Upgrade and the 2020 Mega Patch built in, as well as those of " +
+                                     "Embers of the Empire, which is played on the Upgrade.", 12, 0.85),
                                 Links(("X-Wing Alliance Upgrade website", XwaUpgradePage))),
                             Section("OpenXW, OpenTIE, OpenXvT and OpenXWA",
                                 Text("Open-source reimplementations of the original games' engines (GPL-3.0). They run the original " +

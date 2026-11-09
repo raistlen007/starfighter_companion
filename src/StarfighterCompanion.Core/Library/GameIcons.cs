@@ -19,8 +19,10 @@ public static class GameIcons
         ["bop"] = new[] { "Z_XVT__.EXE" },
         ["xwa"] = new[] { "XWINGALLIANCE.EXE" },
         ["xwaup"] = new[] { "XWINGALLIANCE.EXE" },
+        ["xwaup2020"] = new[] { "XWINGALLIANCE.EXE" },
+        ["embers"] = new[] { "XWINGALLIANCE.EXE" },
         ["tftc"] = new[] { "XWINGALLIANCE.EXE" },
-        ["eote"] = new[] { "XWINGALLIANCE.EXE" },
+        ["tftcr"] = new[] { "XWINGALLIANCE.EXE" },
     };
 
     /// <summary>Programs that are not the game itself and whose icon would be misleading.</summary>
