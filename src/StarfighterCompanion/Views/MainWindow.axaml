@@ -1,6 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:StarfighterCompanion.ViewModels"
+        xmlns:views="using:StarfighterCompanion.Views"
         x:Class="StarfighterCompanion.Views.MainWindow"
         x:DataType="vm:MainViewModel"
         Title="{Binding WindowTitle}"
@@ -116,10 +117,14 @@
               <ListBox ItemsSource="{Binding GameItems}" SelectedItem="{Binding SelectedGameItem}" Background="Transparent">
                 <ListBox.ItemTemplate>
                   <DataTemplate x:DataType="vm:GameItemViewModel">
-                    <StackPanel Margin="2,4" Opacity="{Binding Opacity}">
-                      <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
-                      <TextBlock Text="{Binding Summary}" Classes="muted" FontSize="12" />
-                    </StackPanel>
+                    <DockPanel Margin="2,4" Opacity="{Binding Opacity}">
+                      <views:GameIconView DockPanel.Dock="Left" Source="{Binding Icon}" Width="32" Height="32"
+                                          Margin="0,0,10,0" VerticalAlignment="Center" />
+                      <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
+                        <TextBlock Text="{Binding Summary}" Classes="muted" FontSize="12" />
+                      </StackPanel>
+                    </DockPanel>
                   </DataTemplate>
                 </ListBox.ItemTemplate>
               </ListBox>
@@ -133,10 +138,14 @@
               <ListBox ItemsSource="{Binding VariantItems}" SelectedItem="{Binding SelectedVariantItem}" Background="Transparent">
                 <ListBox.ItemTemplate>
                   <DataTemplate x:DataType="vm:VariantItemViewModel">
-                    <StackPanel Margin="2,4" Opacity="{Binding Opacity}">
-                      <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextWrapping="Wrap" />
-                      <TextBlock Text="{Binding Summary}" Classes="muted" FontSize="11" TextWrapping="Wrap" />
-                    </StackPanel>
+                    <DockPanel Margin="2,4" Opacity="{Binding Opacity}">
+                      <views:GameIconView DockPanel.Dock="Left" Source="{Binding Icon}" Width="28" Height="28"
+                                          Margin="0,0,10,0" VerticalAlignment="Center" />
+                      <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                        <TextBlock Text="{Binding Summary}" Classes="muted" FontSize="11" TextWrapping="Wrap" />
+                      </StackPanel>
+                    </DockPanel>
                   </DataTemplate>
                 </ListBox.ItemTemplate>
               </ListBox>
@@ -209,11 +218,15 @@
                         <DataTemplate x:DataType="vm:VariantSettingViewModel">
                           <Border Background="#0DFFFFFF" CornerRadius="6" Padding="12,8" Margin="0,0,0,8">
                             <Grid ColumnDefinitions="230,*,Auto" RowDefinitions="Auto,Auto">
-                              <StackPanel Grid.Column="0" Grid.RowSpan="2" Margin="0,0,12,0">
-                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextWrapping="Wrap" />
-                                <TextBlock Text="{Binding Description}" IsVisible="{Binding HasDescription}"
-                                           Classes="muted" FontSize="11" TextWrapping="Wrap" />
-                              </StackPanel>
+                              <DockPanel Grid.Column="0" Grid.RowSpan="2" Margin="0,0,12,0">
+                                <views:GameIconView DockPanel.Dock="Left" Source="{Binding Icon}" Width="24" Height="24"
+                                                    Margin="0,0,8,0" VerticalAlignment="Top" />
+                                <StackPanel>
+                                  <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                                  <TextBlock Text="{Binding Description}" IsVisible="{Binding HasDescription}"
+                                             Classes="muted" FontSize="11" TextWrapping="Wrap" />
+                                </StackPanel>
+                              </DockPanel>
                               <TextBox Grid.Column="1" Grid.Row="0" Watermark="Not set"
                                        Text="{Binding FolderText, UpdateSourceTrigger=LostFocus}" />
                               <StackPanel Grid.Column="2" Grid.Row="0" Orientation="Horizontal" Spacing="6" Margin="8,0,0,0">
@@ -241,6 +254,21 @@
         <Grid Classes="page" IsVisible="{Binding ShowEditor}" RowDefinitions="Auto,*,5,160">
 
           <Border Grid.Row="0" Padding="14,10" Background="#0FFFFFFF">
+            <DockPanel>
+            <!-- X-Wing: the face the DOS game picks from the pilot's name, and the name itself (it is the file name). -->
+            <StackPanel DockPanel.Dock="Left" IsVisible="{Binding IsXWingPilot}" Margin="0,0,14,0" Spacing="4"
+                        ToolTip.Tip="{Binding PortraitHelp}">
+              <Border Width="{Binding PortraitWidth}" Height="{Binding PortraitHeight}" Background="#22000000"
+                      BorderBrush="#44FFFFFF" BorderThickness="1" CornerRadius="3" ClipToBounds="True">
+                <Panel>
+                  <Image Source="{Binding Portrait}" Stretch="Fill" RenderOptions.BitmapInterpolationMode="None"
+                         IsVisible="{Binding HasPortrait}" />
+                  <TextBlock Text="?" FontSize="40" FontWeight="Bold" Foreground="#F44336" Opacity="0.8"
+                             HorizontalAlignment="Center" VerticalAlignment="Center" IsVisible="{Binding HasNoPortrait}" />
+                </Panel>
+              </Border>
+              <TextBlock Text="{Binding PortraitCaption}" Classes="muted" FontSize="11" HorizontalAlignment="Center" />
+            </StackPanel>
             <StackPanel Spacing="2">
               <DockPanel>
                 <Button DockPanel.Dock="Right" VerticalAlignment="Top" Content="Convert / export…"
@@ -248,6 +276,13 @@
                         ToolTip.Tip="Write this pilot for another edition of the game, or move it into or out of XWVM." />
                 <TextBlock Text="{Binding PilotTitle}" FontSize="22" FontWeight="SemiBold" />
               </DockPanel>
+              <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,2,0,2" IsVisible="{Binding IsXWingPilot}">
+                <TextBlock Text="Pilot name" VerticalAlignment="Center" />
+                <TextBox Text="{Binding PilotNameDraft, UpdateSourceTrigger=PropertyChanged}" Width="200"
+                         ToolTip.Tip="Type a name to see the face the game gives it. Rename renames the pilot file." />
+                <Button Content="Rename" Command="{Binding RenameCommand}" />
+              </StackPanel>
+              <TextBlock Text="{Binding RenameError}" IsVisible="{Binding HasRenameError}" Classes="error" />
               <TextBlock Text="{Binding FormatTitle}" />
               <TextBlock Text="{Binding FilePath}" Classes="muted" FontSize="12" TextTrimming="PathSegmentEllipsis" />
               <ItemsControl ItemsSource="{Binding Notes}" Margin="0,4,0,0">
@@ -258,6 +293,7 @@
                 </ItemsControl.ItemTemplate>
               </ItemsControl>
             </StackPanel>
+            </DockPanel>
           </Border>
 
           <Grid Grid.Row="1">

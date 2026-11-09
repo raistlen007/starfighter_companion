@@ -35,6 +35,7 @@ public sealed partial class MainViewModel : ViewModelBase
         ConvertCommand = new Command(ConvertAsync, () => CanConvert);
         AboutCommand = new Command(AboutAsync);
         ExitCommand = new Command(() => _window.Close());
+        InitializePortrait();
         InitializeLibrary();
     }
 
@@ -363,7 +364,7 @@ public sealed partial class MainViewModel : ViewModelBase
 
         var outcome = await ConvertDialog.ShowAsync(_window, data, _format, _document.Edition, _document.VariantId, _document.PilotName,
             variantId => _library.FolderFor(variantId) is { } folder && Directory.Exists(folder) ? folder : null,
-            BrowseForVariantAsync);
+            BrowseForVariantAsync, PortraitFor);
         if (outcome is null)
         {
             return;
@@ -423,6 +424,7 @@ public sealed partial class MainViewModel : ViewModelBase
         RevertCommand.RaiseCanExecuteChanged();
         ConvertCommand.RaiseCanExecuteChanged();
         Raise(nameof(CanConvert));
+        OnDocumentLoadedForPortrait();
     }
 
     private void OnFieldChanged(object? sender, EditableField field)

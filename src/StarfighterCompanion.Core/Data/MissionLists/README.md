@@ -1,6 +1,6 @@
 # Built-in mission lists
 
-Starfighter Companion never reads game files. To show X-Wing Alliance missions grouped by battle and with their
+Mission lists are not read from the game. To show X-Wing Alliance missions grouped by battle and with their
 titles, the mission lists of each version are compiled into the program from this folder:
 
 | File | Used for |

@@ -1,6 +1,6 @@
 # Built-in craft names
 
-Craft names by craft type for the XWA-based versions, compiled into the program (game files are never read).
+Craft names by craft type for the XWA-based versions, compiled into the program (they are not read from the game).
 Each line is `<craft type><TAB><name>`, taken from the version's `SHIPLIST.TXT`. Hidden (`*`) and unused
 (`DontUseMe`) entries are left out and shown by number.
 

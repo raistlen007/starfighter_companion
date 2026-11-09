@@ -23,7 +23,8 @@ public static class ConvertDialog
         string? sourceVariant,
         string pilotName,
         Func<string, string?> folderFor,
-        Func<string, Task<string?>> browseFolder)
+        Func<string, Task<string?>> browseFolder,
+        Func<string, Avalonia.Media.Imaging.Bitmap?>? portraitFor = null)
     {
         var targets = PilotConverter.TargetsFor(format, source, data, sourceVariant);
         Outcome? outcome = null;
@@ -42,6 +43,11 @@ public static class ConvertDialog
 
         var targetBox = new ComboBox { ItemsSource = targets, SelectedIndex = 0, HorizontalAlignment = HorizontalAlignment.Stretch };
         var nameBox = new TextBox();
+
+        // X-Wing chooses the pilot's face from the name: show it as the name is typed.
+        var portrait = new Image { Stretch = Stretch.Fill, IsVisible = false, Margin = new Thickness(10, 0, 0, 0) };
+        RenderOptions.SetBitmapInterpolationMode(portrait, Avalonia.Media.Imaging.BitmapInterpolationMode.None);
+        ToolTip.SetTip(portrait, "The face DOS X-Wing gives a pilot with this name.");
         var nameError = new TextBlock { Foreground = Brushes.IndianRed, TextWrapping = TextWrapping.Wrap, IsVisible = false };
         var folderText = new TextBlock { TextWrapping = TextWrapping.Wrap, VerticalAlignment = VerticalAlignment.Center, Opacity = 0.8 };
         var browse = new Button { Content = "Browse…" };
@@ -59,6 +65,15 @@ public static class ConvertDialog
             var error = PilotConverter.CheckName(target, nameBox.Text ?? string.Empty);
             nameError.Text = error ?? string.Empty;
             nameError.IsVisible = error is not null;
+            var face = target.Edition?.Family == GameFamily.XWing ? portraitFor?.Invoke(nameBox.Text ?? string.Empty) : null;
+            portrait.Source = face;
+            portrait.IsVisible = face is not null;
+            if (face is not null)
+            {
+                // Twice the DOS size; DOS pixels are 1.2 times taller than wide.
+                portrait.Width = face.PixelSize.Width * 2;
+                portrait.Height = face.PixelSize.Height * 2 * 1.2;
+            }
             folderText.Text = folder ?? "No folder is set for this version. Choose one with Browse, or set it in Settings.";
 
             if (error is not null || folder is null)
@@ -174,7 +189,14 @@ public static class ConvertDialog
                         Label("Convert to"),
                         targetBox,
                         Label("Pilot name"),
-                        nameBox,
+                        new DockPanel
+                        {
+                            Children =
+                            {
+                                new Border { [DockPanel.DockProperty] = Dock.Right, Child = portrait },
+                                new Border { VerticalAlignment = VerticalAlignment.Top, Child = nameBox },
+                            },
+                        },
                         nameError,
                         Label("Folder"),
                         new DockPanel

@@ -249,7 +249,7 @@ internal sealed class XWingPilotDocument : BinaryPilotDocument
     {
         _format = format;
         PilotName = Path.GetFileNameWithoutExtension(fileName);
-        Notes.Add("X-Wing stores the pilot's name as the file name, so it cannot be changed here.");
+        Notes.Add("X-Wing stores the pilot's name as the file name: renaming the pilot renames the file.");
         Arrange();
     }
 

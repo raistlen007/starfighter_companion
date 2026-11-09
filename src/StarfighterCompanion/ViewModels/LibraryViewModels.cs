@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using Avalonia.Media.Imaging;
 using StarfighterCompanion.Core.Library;
 
 namespace StarfighterCompanion.ViewModels;
@@ -40,10 +41,21 @@ public sealed class GameItemViewModel : ViewModelBase
     }
 
     public double Opacity => _isAvailable ? 1.0 : 0.55;
+
+    /// <summary>The icon of the first installed version that has one; null shows the placeholder.</summary>
+    public Bitmap? Icon
+    {
+        get => _icon;
+        set => Set(ref _icon, value);
+    }
+
+    private Bitmap? _icon;
 }
 
 public sealed class VariantItemViewModel : ViewModelBase
 {
+    private Bitmap? _icon;
+
     public VariantItemViewModel(VariantDefinition variant, string? folder)
     {
         Variant = variant;
@@ -61,6 +73,13 @@ public sealed class VariantItemViewModel : ViewModelBase
     public string Summary => IsAvailable ? Folder! : "Not found. Set its folder in Settings.";
 
     public double Opacity => IsAvailable ? 1.0 : 0.55;
+
+    /// <summary>The icon read from this version's folder; null shows the placeholder.</summary>
+    public Bitmap? Icon
+    {
+        get => _icon;
+        set => Set(ref _icon, value);
+    }
 }
 
 public sealed class PilotItemViewModel
@@ -82,6 +101,7 @@ public sealed class VariantSettingViewModel : ViewModelBase
     private readonly Func<VariantSettingViewModel, Task> _browse;
     private string _folderText = string.Empty;
     private int _pilotCount = -1;
+    private Bitmap? _icon;
 
     public VariantSettingViewModel(VariantDefinition variant, GameLibrary library, Action changed, Func<VariantSettingViewModel, Task> browse)
     {
@@ -150,6 +170,13 @@ public sealed class VariantSettingViewModel : ViewModelBase
     }
 
     public bool CanUseAuto => _library.Settings.IsUserSet(Variant.Id);
+
+    /// <summary>The icon read from the folder in effect; null shows the placeholder.</summary>
+    public Bitmap? Icon
+    {
+        get => _icon;
+        set => Set(ref _icon, value);
+    }
 
     public void SetFolder(string folder)
     {

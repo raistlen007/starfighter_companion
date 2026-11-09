@@ -61,7 +61,7 @@ public static class XwaMissionList
     /// <summary>
     /// The campaign mission list built into Starfighter Companion (xwa, embers, tftc, tftcr, tftc.combat), or null if
     /// none is included. Lists are compiled in from src/StarfighterCompanion.Core/Data/MissionLists/&lt;edition&gt;.lst;
-    /// the editor never reads game files.
+    /// the editor does not read mission lists from the game.
     /// </summary>
     public static IReadOnlyList<XwaMissionListEntry>? BuiltIn(string edition)
     {
