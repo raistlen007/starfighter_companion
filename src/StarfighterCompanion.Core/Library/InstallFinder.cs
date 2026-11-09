@@ -145,6 +145,69 @@ public sealed partial class InstallFinder
         return found;
     }
 
+    /// <summary>XWVM's installer id (innosetup/xwvm.iss AppID); Inno Setup records the install folder under it.</summary>
+    private const string XwvmUninstallKey = @"Software\Microsoft\Windows\CurrentVersion\Uninstall\{ED9A9575-B62E-4202-95C5-9FBC8FEDE2D4}_is1";
+
+    /// <summary>
+    /// Finds the folder with the program of a version whose library folder only holds pilots (the OpenXW family and
+    /// XWVM keep pilots in a user folder), so its icon can be read from the program. Looks in the places games are
+    /// searched for, by folder name ("OpenXWA Testing", "XWVM"), and for XWVM where its installer put it.
+    /// Returns null when the program is not found.
+    /// </summary>
+    public string? FindProgramFolder(string program, IReadOnlyList<string> folderNames, IReadOnlyList<string>? excludedNames = null)
+    {
+        static string Normal(string name) => MultiSpace().Replace(name.ToLowerInvariant().Replace('_', ' ').Replace('-', ' '), " ").Trim();
+
+        var candidates = new List<string>();
+        if (program.Equals("xwvm.exe", StringComparison.OrdinalIgnoreCase))
+        {
+            foreach (var currentUser in new[] { false, true })
+            {
+                if (ReadRegistryString(XwvmUninstallKey, "InstallLocation", currentUser) is { Length: > 0 } location)
+                {
+                    candidates.Add(location);
+                }
+            }
+
+            if (OperatingSystem.IsWindows())
+            {
+                candidates.Add(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "XWVM"));
+                candidates.Add(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "XWVM"));
+            }
+        }
+
+        foreach (var (dir, _, nameHint) in CandidateGameFolders())
+        {
+            var name = Normal(nameHint ?? Path.GetFileName(dir.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)));
+            if (folderNames.Any(n => name.StartsWith(n, StringComparison.Ordinal)) &&
+                (excludedNames is null || !excludedNames.Any(n => name.StartsWith(n, StringComparison.Ordinal))))
+            {
+                candidates.Add(dir);
+            }
+        }
+
+        foreach (var dir in candidates.Where(d => !string.IsNullOrWhiteSpace(d) && _directoryExists(d)))
+        {
+            // The program itself, or one folder down (a build folder such as "bin" or "Release").
+            foreach (var folder in new[] { dir }.Concat(_subdirectories(dir)))
+            {
+                try
+                {
+                    if (Directory.EnumerateFiles(folder, program, new EnumerationOptions { MatchCasing = MatchCasing.CaseInsensitive }).Any())
+                    {
+                        return folder;
+                    }
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                {
+                    // Not readable: try the next one.
+                }
+            }
+        }
+
+        return null;
+    }
+
     internal enum GameKind
     {
         None,

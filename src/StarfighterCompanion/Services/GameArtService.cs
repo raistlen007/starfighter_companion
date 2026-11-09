@@ -43,7 +43,12 @@ public sealed class GameArtService
     /// <summary>The icon of the game in <paramref name="folder"/>, or null (the UI then shows its placeholder).</summary>
     public Task<Bitmap?> IconAsync(string variantId, string? folder)
     {
-        if (string.IsNullOrEmpty(folder))
+        // OpenXW-family and XWVM icons come from their program, wherever it is, not from the pilot folder.
+        if (GameIcons.IsPilotOnlyVersion(variantId))
+        {
+            folder = string.Empty;
+        }
+        else if (string.IsNullOrEmpty(folder))
         {
             return Task.FromResult<Bitmap?>(null);
         }
@@ -110,6 +115,7 @@ public sealed class GameArtService
         {
             _icons.Clear();
             _portraits = null;
+            GameIcons.ResetProgramFolders();
         }
     }
 

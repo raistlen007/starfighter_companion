@@ -34,6 +34,23 @@ public sealed class LibraryTests : IDisposable
     public void Install_folders_are_recognised_by_name(string name, string expected) =>
         Assert.Equal(expected, InstallFinder.Classify(name).ToString());
 
+    [Fact]
+    public void Programs_of_pilot_only_versions_are_found_by_folder_name()
+    {
+        var games = Directory.CreateDirectory(Path.Combine(_root, "Games")).FullName;
+        var xwa = Directory.CreateDirectory(Path.Combine(games, "OpenXWA Testing", "bin")).FullName;
+        File.WriteAllBytes(Path.Combine(xwa, "OpenXWA.exe"), new byte[16]);
+        var xw = Directory.CreateDirectory(Path.Combine(games, "OpenXW")).FullName;
+        File.WriteAllBytes(Path.Combine(xw, "openxw.exe"), new byte[16]);
+        Directory.CreateDirectory(Path.Combine(games, "OpenXvT")); // no program in it
+
+        var finder = new InstallFinder();
+        finder.ExtraSearchRoots.Add(games);
+        Assert.Equal(xwa, finder.FindProgramFolder("OpenXWA.exe", new[] { "openxwa" }));
+        Assert.Equal(xw, finder.FindProgramFolder("OpenXW.exe", new[] { "openxw" }, new[] { "openxwa" }));
+        Assert.Null(finder.FindProgramFolder("OpenXvT.exe", new[] { "openxvt" }));
+    }
+
     [Theory]
     [InlineData("TFTC-R", true)]
     [InlineData("TFTC Reimagined", true)]

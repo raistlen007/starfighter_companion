@@ -25,6 +25,53 @@ public static class GameIcons
         ["tftcr"] = new[] { "XWINGALLIANCE.EXE" },
     };
 
+    /// <summary>
+    /// Versions whose library folder only holds pilots: their icon is read from their program, found elsewhere
+    /// (<see cref="InstallFinder.FindProgramFolder"/>). Program, folder names, and folder names that are another version.
+    /// </summary>
+    private static readonly Dictionary<string, (string Program, string[] Names, string[]? Not)> PilotOnlyVersions = new()
+    {
+        ["openxw"] = ("OpenXW.exe", new[] { "openxw" }, new[] { "openxwa" }),
+        ["opentie"] = ("OpenTIE.exe", new[] { "opentie", "opentf" }, null),
+        ["openxvt"] = ("OpenXvT.exe", new[] { "openxvt" }, null),
+        ["openxwa"] = ("OpenXWA.exe", new[] { "openxwa" }, null),
+        ["xwvm"] = ("xwvm.exe", new[] { "xwvm" }, null),
+    };
+
+    private static readonly Dictionary<string, string?> ProgramFolders = new();
+
+    /// <summary>The icon of a version that keeps pilots apart from its program (OpenXW family, XWVM), or null.</summary>
+    public static GameImage? FindForPilotOnlyVersion(string variantId, InstallFinder? finder = null)
+    {
+        if (!PilotOnlyVersions.TryGetValue(variantId, out var entry))
+        {
+            return null;
+        }
+
+        string? folder;
+        lock (ProgramFolders)
+        {
+            if (!ProgramFolders.TryGetValue(variantId, out folder))
+            {
+                folder = (finder ?? new InstallFinder()).FindProgramFolder(entry.Program, entry.Names, entry.Not);
+                ProgramFolders[variantId] = folder;
+            }
+        }
+
+        return folder is null ? null : FromPrograms(folder, new[] { entry.Program }) ?? FromIcoFiles(folder, gogOnly: false);
+    }
+
+    public static bool IsPilotOnlyVersion(string variantId) => PilotOnlyVersions.ContainsKey(variantId);
+
+    /// <summary>Forgets where the programs were found (after the game folders change).</summary>
+    public static void ResetProgramFolders()
+    {
+        lock (ProgramFolders)
+        {
+            ProgramFolders.Clear();
+        }
+    }
+
     /// <summary>Programs that are not the game itself and whose icon would be misleading.</summary>
     private static readonly string[] NotTheGame = { "unins", "setup", "install", "dosbox", "config", "launcher", "vcredist", "dxsetup", "dgvoodoo" };
 
@@ -35,6 +82,11 @@ public static class GameIcons
     /// </summary>
     public static GameImage? Find(string variantId, string? folder)
     {
+        if (IsPilotOnlyVersion(variantId))
+        {
+            return FindForPilotOnlyVersion(variantId);
+        }
+
         if (string.IsNullOrEmpty(folder) || !Directory.Exists(folder))
         {
             return null;
