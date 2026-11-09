@@ -75,6 +75,17 @@ version; the open file itself is not changed.
 The new file goes into that version's folder from Settings (or one you pick), named after the pilot. The DOS editions
 allow 8 characters, the 1998 editions 16. If the file exists, it is replaced and backed up as usual.
 
+### Icons and X-Wing pilot portraits
+
+Each game and version in the menu shows its icon, read from the game's own folder (its program, or the `.ico` file
+GOG installs). Nothing copyrighted is shipped with Starfighter Companion: a game that is not installed, or a version
+without an icon of its own (the DOS editions), shows a red question mark instead.
+
+DOS X-Wing gave every pilot a face on its pilot selection screen, chosen from the pilot's name. X-Wing pilots get the
+same face in the editor, read from your DOS X-Wing install (`RESOURCE\PILOT.LFD`, or inside the GOG/Steam CD image).
+Type a new name in **Pilot name** and the face changes as you type; **Rename** renames the pilot (X-Wing keeps the
+name only as the file name). The Convert dialog shows the face for the new name too.
+
 You can still open any pilot file directly with **Open a pilot file…** or by dragging it onto the window.
 
 ## How it keeps your pilot safe
@@ -125,7 +136,7 @@ See [docs/FORMATS.md](docs/FORMATS.md) for the details of each format.
 ## Credits
 
 File layouts are based on the reverse-engineering work of the **OpenXW, OpenTIE, OpenXvT and OpenXWA** projects
-(GPL-3.0) and on **XWVM**'s pilot code.
+(GPL-3.0), their **Landru** resource library (GPL-3.0; LFD, ANIM and palette formats for the X-Wing portraits) and on **XWVM**'s pilot code.
 
 ## License
 

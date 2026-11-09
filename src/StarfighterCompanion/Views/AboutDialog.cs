@@ -90,7 +90,7 @@ public static class AboutDialog
             {
                 header,
                 Text("A pilot file editor for the X-Wing series: X-Wing, TIE Fighter, X-Wing vs. TIE Fighter, Balance of Power, " +
-                     "X-Wing Alliance (including XWAUP and TFTC), the OpenXW family of reimplementations, and XWVM."),
+                     "X-Wing Alliance (including XWAUP, TFTC and Embers of the Empire), the OpenXW family of reimplementations, and XWVM."),
                 Text("Values are checked as you type, and a pilot that would break the game cannot be saved. Before a file is " +
                      "overwritten, the original is kept as .original.bak and the previous version as .bak."),
                 new Border

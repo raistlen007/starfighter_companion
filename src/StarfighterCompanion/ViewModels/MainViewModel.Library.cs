@@ -2,12 +2,14 @@ using System.Collections.ObjectModel;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using StarfighterCompanion.Core.Library;
+using StarfighterCompanion.Services;
 
 namespace StarfighterCompanion.ViewModels;
 
 /// <summary>Game menu (left side) and Settings.</summary>
 public sealed partial class MainViewModel
 {
+    private readonly GameArtService _art = new();
     private GameLibrary _library = null!;
     private NavigationPage _page = NavigationPage.Games;
     private GameItemViewModel? _currentGame;
@@ -160,12 +162,14 @@ public sealed partial class MainViewModel
         {
             var detected = await Task.Run(() => new InstallFinder().DetectAll());
             _library.ApplyDetection(detected);
+            _art.Reset();
             foreach (var row in SettingsGames.SelectMany(g => g.Variants))
             {
                 row.Refresh();
             }
 
             RefreshGameSummaries();
+            await ReloadPortraitAsync();
             var games = GameItems.Count(g => g.IsAvailable);
             Status = games == 0
                 ? "No installed games were found automatically. Set their folders in Settings."
@@ -195,7 +199,41 @@ public sealed partial class MainViewModel
                 _ => $"{found.Count} versions",
             };
         }
+
+        _ = RefreshIconsAsync();
     }
+
+    /// <summary>Reads the icons of the games, versions and settings rows from the game folders (cached).</summary>
+    private async Task RefreshIconsAsync()
+    {
+        foreach (var item in GameItems.ToList())
+        {
+            Avalonia.Media.Imaging.Bitmap? icon = null;
+            foreach (var variant in item.Game.Variants)
+            {
+                icon = await _art.IconAsync(variant.Id, InstalledFolder(variant.Id));
+                if (icon is not null)
+                {
+                    break;
+                }
+            }
+
+            item.Icon = icon;
+        }
+
+        foreach (var item in VariantItems.ToList())
+        {
+            item.Icon = await _art.IconAsync(item.Variant.Id, item.IsAvailable ? item.Folder : null);
+        }
+
+        foreach (var row in SettingsGames.SelectMany(g => g.Variants).ToList())
+        {
+            row.Icon = await _art.IconAsync(row.Variant.Id, InstalledFolder(row.Variant.Id));
+        }
+    }
+
+    private string? InstalledFolder(string variantId) =>
+        _library.FolderFor(variantId) is { } folder && Directory.Exists(folder) ? folder : null;
 
     private void OpenGame(GameItemViewModel game)
     {
@@ -206,6 +244,7 @@ public sealed partial class MainViewModel
             VariantItems.Add(new VariantItemViewModel(variant, _library.FolderFor(variant.Id)));
         }
 
+        _ = RefreshIconsAsync();
         if (game.Game.Variants.Count == 1)
         {
             _ = OpenVariantAsync(VariantItems[0]);
@@ -329,7 +368,9 @@ public sealed partial class MainViewModel
             Status = "Could not save the settings: " + ex.Message;
         }
 
+        _art.Reset();
         RefreshGameSummaries();
+        _ = ReloadPortraitAsync();
     }
 
     private void RefreshAfterSettings()

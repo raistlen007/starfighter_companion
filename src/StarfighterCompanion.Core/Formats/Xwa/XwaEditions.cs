@@ -5,7 +5,7 @@ namespace StarfighterCompanion.Core.Formats.Xwa;
 
 /// <summary>
 /// What differs between the XWA versions a pilot can belong to: craft names and mission lists. All of it is built
-/// into Starfighter Companion (Data/CraftLists and Data/MissionLists); game files are never read.
+/// into Starfighter Companion (Data/CraftLists and Data/MissionLists); they are not read from the game.
 /// </summary>
 internal sealed class XwaEdition
 {

@@ -12,7 +12,13 @@ always written back unchanged.
   87 bytes at 0x289 instead of 86, so everything from the tour status onwards is one byte later.
 * The game may write the record twice in a row (3,410 / 3,412 bytes); readers use the first copy.
   When an edited file is saved, every copy is refreshed from the first.
-* The pilot's name is the file name; it is not stored inside.
+* The pilot's name is the file name; it is not stored inside. Renaming the pilot renames the file (in upper case,
+  like the registration desk).
+* Portrait: the DOS pilot selection screen (OpenXW `src/xw_dos94/frontend/pilot_selection.c`, `draw_pilot`) shows
+  frame `abs((sum - 1) % 24)` of the `ANIM` resource `faces` in `RESOURCE\PILOT.LFD`, where `sum` adds up the
+  character codes of the pilot's name. The frames are delta images (Landru `delta.c`) coloured with the `PLTT`
+  resources of PILOT.LFD on top of the `standard` palette in `RESOURCE\XWING.LFD`. They are read from the player's
+  DOS install (also from the CD image `game.gog` / `game.fil` of the GOG and Steam editions); nothing is shipped.
 * Rules: one active tour at most, and it must be the current tour (error); hits ≤ shots, per-craft kills ≤ total (warnings).
 
 ## TIE Fighter — `.tfr`
@@ -89,7 +95,7 @@ Each format arranges its fields for display (`PilotDocument.BeginLayout`); the f
   Chamber tables are both indexed by the mission's number in that list (a campaign mission replayed outside the
   campaign is recorded in the Combat Chamber table). The XWA Upgrade uses the original list; Embers of the Empire and
   TFTC Classic and Reimagined have their own, and TFTC's Combat Chamber has its own `COMBAT\MISSION.LST`.
-  Starfighter Companion never reads game files.
+  Mission lists and craft names are not read from the game.
 
 ## Converting
 
