@@ -62,8 +62,11 @@ public class FormatTests
     [Theory]
     [InlineData("xwa", "X-wing (craft type 1) unlocked")]
     [InlineData("openxwa", "X-wing (craft type 1) unlocked")]
-    [InlineData("xwaup", "Craft type 1 unlocked")]
-    [InlineData("tftc", "Craft type 1 unlocked")]
+    [InlineData("xwaup", "X-Wing Starfighter (craft type 1) unlocked")]
+    [InlineData("xwaup2020", "X-Wing (craft type 1) unlocked")]
+    [InlineData("embers", "X-Wing (craft type 1) unlocked")]
+    [InlineData("tftc", "X-Wing Starfighter (craft type 1) unlocked")]
+    [InlineData("tftcr", "X-Wing Starfighter (craft type 1) unlocked")]
     public void Xwa_variant_determines_only_display_labels(string variantId, string expected)
     {
         var data = new byte[XwaPilotFormat.RecordSize];

@@ -1,0 +1,141 @@
+// TIE Fighter Total Conversion Reimagined campaign missions (from the game's MISSIONS\MISSION.LST, localisation keys removed).
+// Format: [battle], then per mission: number in the pilot file, mission file, title.
+[Pilot Training]
+3
+* 1b0m1tftcTF-R.tie
+Basic Combat Training
+4
+* 1b0m2tftcTI-R.tie
+Wingmen Training
+5
+* 1b0m3tftcTB-R.tie
+Torpedo Training
+6
+* 1b0m4tftcGUN-R.tie
+Advanced Combat Training
+7
+* 1b0m5tftc-R.tie
+Prologue
+[Battle 1: Aftermath of Hoth]
+9
+* 1b1m1tftc-R.tie
+Patrol Jump Point D-34
+10
+* 1b1m2tftc-R.tie
+Red Alert!
+11
+* 1b1m3tftc-R.tie
+Counter-Attack
+12
+* 1b1m4tftc-R.tie
+Outpost D-34 Has Fallen
+13
+* 1b1m5tftc-R.tie
+Attack Rebel Task Force
+14
+* 1b1m6tftc-R.tie
+Destroy Rebel Task Force
+[Battle 2: The Sepan Civil War]
+15
+* 1b2m1tftc-R.tie
+Respond To S.O.S
+16
+* 1b2m2tftc-R.tie
+Intercept Attack
+17
+* 1b2m3tftc-R.tie
+Rescue War Refugees
+18
+* 1b2m4tftc-R.tie
+Capture Enemies
+19
+* 1b2m5tftc-R.tie
+The Battle of Sepan
+[Battle 3: Battle On The Frontier]
+20
+* 1b3m1tftc-R.tie
+Load Base Equipment
+21
+* 1b3m2tftc-R.tie
+Destroy Pirate Outpost
+22
+* 1b3m3tftc-R.tie
+Hold Position
+23
+* 1b3m4tftc-R.tie
+Investigate Distress Call
+24
+* 1b3m5tftc-R.tie
+Trap the Rebel Fleet
+[Battle 4: Conflict At Mylok IV]
+25
+* 1b4m1tftc-R.tie
+Escort Convoy
+26
+* 1b4m2tftc-R.tie
+Attack The Nharwaak
+27
+* 1b4m3tftc-R.tie
+Defend Tech Center
+28
+* 1b4m4tftc-R.tie
+Diplomatic Meeting
+29
+* 1b4m5tftc-R.tie
+Rebel Arms Deal
+[Battle 5: Battle for Honour]
+30
+* 1b5m1tftc-R.tie
+Mineclearing
+31
+* 1b5m2tftc-R.tie
+Harkov Fleet Recon
+32
+* 1b5m3tftc-R.tie
+Convoy Attack
+33
+* 1b5m4tftc-R.tie
+Capture Harkov
+[Battle 6: Arms Race]
+34
+* 1b6m1tftc-R.tie
+Protect Prototypes
+35
+* 1b6m2tftc-R.tie
+Convoy Escort
+36
+* 1b6m3tftc-R.tie
+Punitive Raid
+37
+* 1b6m4tftc-R.tie
+Interlude
+[Battle 7: Treachery at Ottega]
+38
+* 1b7m1tftc-R.tie
+Destroy the Protector
+39
+* 1b7m2tftc-R.tie
+TIE Defender
+40
+* 1b7m3tftc-R.tie
+Save the Emperor
+[Battle 8: Strategic Warfare]
+41
+* 1b8m1tftc-R.tie
+Evacuate TIE Advanced Plants
+42
+* 1b8m2tftc-R.tie
+Save & Secure TIE Advanced Factory
+43
+* 1b8m3tftc-R.tie
+Supply TIE Advanced Plant
+44
+* 1b8m4tftc-R.tie
+Capture Mag Pulse Weapon
+45
+* 1b8m5tftc-R.tie
+Trapped
+[Battle 9: TIE Defender Technology]
+46
+* 1b9m1tftc-R.tie
+The Seventh Fleet

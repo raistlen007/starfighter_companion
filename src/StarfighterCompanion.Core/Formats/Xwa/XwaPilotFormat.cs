@@ -15,10 +15,7 @@ public sealed class XwaPilotFormat : PilotFormat
     public const int CraftTypes = 512;
     public const int FlightGroups = 192;
 
-    private static readonly Lazy<RecordSchema> SchemaInstance =
-        new(() => BuildSchema(OriginalXwaCraftNames.Label));
-    private static readonly Lazy<RecordSchema> GenericSchemaInstance =
-        new(() => BuildSchema(i => $"Craft type {i}"));
+    private static readonly Dictionary<string, RecordSchema> Schemas = new();
 
     public override string Game => "Star Wars: X-Wing Alliance";
 
@@ -28,7 +25,32 @@ public sealed class XwaPilotFormat : PilotFormat
 
     public override string Signature => $"{RecordSize:N0} bytes";
 
-    public static RecordSchema Schema => SchemaInstance.Value;
+    /// <summary>The schema with the original XWA craft names.</summary>
+    public static RecordSchema Schema => SchemaFor(XwaEdition.For("xwa"));
+
+    /// <summary>Statistics are kept separately for these kinds of mission (OpenXWA fediskio.c, statType).</summary>
+    internal static readonly string[] StatTypes = { "Campaign battles", "Family missions", "Outside the campaign" };
+
+    /// <summary>The four career records (OpenXWA PilotData.factionStatistics; currentFactionId).</summary>
+    internal static readonly string[] Records =
+        { "Career: campaign battles", "Unused record", "Career: outside the campaign", "Career: family missions" };
+
+    /// <summary>The kind of mission each career record collects (-1: none).</summary>
+    internal static readonly int[] RecordStatType = { 0, -1, 2, 1 };
+
+    private static RecordSchema SchemaFor(XwaEdition edition)
+    {
+        lock (Schemas)
+        {
+            if (!Schemas.TryGetValue(edition.Id, out var schema))
+            {
+                schema = BuildSchema(edition.CraftLabel);
+                Schemas[edition.Id] = schema;
+            }
+
+            return schema;
+        }
+    }
 
     public override bool Matches(string fileName, ReadOnlySpan<byte> data) =>
         HasExtension(fileName, Extensions) && data.Length == RecordSize;
@@ -37,21 +59,9 @@ public sealed class XwaPilotFormat : PilotFormat
 
     public override PilotDocument Open(string fileName, byte[] data, string? variantId)
     {
-        // Original XWA IDs may be repurposed by XWAU/TFTC; do not guess their names.
-        var original = variantId is null or "xwa" or "openxwa";
-        return new XwaPilotDocument(this, data, original ? Schema : GenericSchemaInstance.Value, original,
-            // Both tables are indexed by the mission's number in the campaign list (OpenXWA mission_setup.c shows a
-            // mission's Tour and Combat Chamber records side by side).
-            XwaMissionList.BuiltIn(ListEdition(variantId)), XwaMissionList.BuiltIn(ListEdition(variantId)));
+        var edition = XwaEdition.For(variantId);
+        return new XwaPilotDocument(this, data, SchemaFor(edition), edition);
     }
-
-    /// <summary>Which built-in mission list fits the library version the pilot came from.</summary>
-    private static string ListEdition(string? variantId) => variantId switch
-    {
-        "xwaup" => "xwaup",
-        "tftc" => "tftc",
-        _ => "xwa",
-    };
 
     private static RecordSchema BuildSchema(Func<int, string> craft)
     {
@@ -112,7 +122,7 @@ public sealed class XwaPilotFormat : PilotFormat
         b.Skip(4);       // selected faction record
         b.Expect(70526, "faction records");
 
-        b.Repeat(4, "faction", XvtCommon.FactionLabel, _ =>
+        b.Repeat(4, "faction", i => Records[i], _ =>
         {
             using (b.Group("Summary"))
             {
@@ -122,11 +132,18 @@ public sealed class XwaPilotFormat : PilotFormat
             b.Skip(4 + 4 + 4 * 7 + 32 + 4);
             using (b.Group("Awards"))
             {
-                b.Array("awardsA", BinaryKind.Int32, 6, i => $"Award counter A, level {i + 1}", positive);
+                var awardHelp = new FieldOptions
+                {
+                    Min = 0,
+                    Help = "How many missions currently hold this award level. The game keeps it in step with each mission's Award.",
+                };
+                b.Array("awardsA", BinaryKind.Int32, 6, i => $"Melee missions with award level {i + 1}", awardHelp);
                 b.Skip(24);
-                b.Array("awardsB", BinaryKind.Int32, 6, i => $"Award counter B, level {i + 1}", positive);
+                b.Array("awardsB", BinaryKind.Int32, 6, i => $"Other missions with award level {i + 1}", awardHelp);
                 b.Skip(24);
-                b.Array("kalidorPoints", BinaryKind.Int32, 4, i => $"Kalidor Crescent points {i + 1}", positive);
+                b.Array("kalidorPoints", BinaryKind.Int32, 4,
+                    i => new[] { "Kalidor Crescent award, last multiplayer mission", "Unused value 1", "Kalidor Crescent award, last mission", "Unused value 2" }[i],
+                    new FieldOptions { Min = 0, Help = "Set by the game after each mission and reset at the start of the next." });
             }
 
             b.Skip(12);
@@ -160,12 +177,15 @@ public sealed class XwaPilotFormat : PilotFormat
 
     private static void Stats(LayoutBuilder b, Func<int, string> craft)
     {
-        var types = XvtCommon.MissionTypes;
+        // Each statistic is stored three times, once per kind of mission (StatTypes); each kind gets its own sub-tree.
         void PerType(string id, string label, FieldOptions o)
         {
-            using (b.Group("Totals"))
+            for (var t = 0; t < 3; t++)
             {
-                b.Array(id, BinaryKind.Int32, 3, i => $"{label} (type {i + 1})", o);
+                using (b.Group(StatTypes[t]))
+                {
+                    b.I32($"{id}[{t}]", label, o);
+                }
             }
         }
 
@@ -173,17 +193,23 @@ public sealed class XwaPilotFormat : PilotFormat
         {
             for (var t = 0; t < 3; t++)
             {
-                var type = t;
-                using (b.Group($"{label} (type {type + 1})"))
+                using (b.Group($"{StatTypes[t]}/{label}"))
                 {
-                    b.Array($"{id}[{type}]", BinaryKind.Int32, count, item, FieldOptions.NonNegative);
+                    b.Array($"{id}[{t}]", BinaryKind.Int32, count, item, FieldOptions.NonNegative);
                 }
             }
         }
 
-        _ = types;
         PerType("scoreByType", "Score", FieldOptions.None);
-        PerType("played", "Missions played", FieldOptions.NonNegative);
+
+        // Counted by the mission list the mission was started from, not by kind of mission (OpenXWA fediskio.c).
+        var played = new FieldOptions
+        {
+            Min = 0,
+            Help = "Counted by the list the mission was started from. Campaign and skirmish missions are not counted here.",
+        };
+        b.Array("played", BinaryKind.Int32, 3, i => $"Missions played from the {new[] { "Missions", "Melee", "Combat" }[i]} list", played);
+
         PerType("kills", "Kills", FieldOptions.NonNegative);
         PerType("friendlyKills", "Friendly craft killed", FieldOptions.NonNegative);
         PerTypeArray("killsByCraft", "Kills by craft", CraftTypes, craft);
@@ -237,19 +263,31 @@ internal sealed class XwaPilotDocument : BinaryPilotDocument
 {
     private readonly XwaPilotFormat _format;
 
-    public XwaPilotDocument(XwaPilotFormat format, byte[] data, RecordSchema schema, bool originalNames,
-        IReadOnlyList<XwaMissionListEntry>? campaign = null, IReadOnlyList<XwaMissionListEntry>? combat = null)
+    private readonly XwaEdition _edition;
+
+    public XwaPilotDocument(XwaPilotFormat format, byte[] data, RecordSchema schema, XwaEdition edition)
         : base(data, schema, 1)
     {
         _format = format;
-        Notes.Add(originalNames
+        _edition = edition;
+        Notes.Add(edition.Id == "xwa"
             ? "Craft names use the original X-Wing Alliance ship list; modded installations may use different names."
-            : "Craft types are listed by ID until this edition's (XWAU/TFTC) craft mappings are verified.");
-        if (campaign is null)
+            : "Craft names come from this version's ship list.");
+        if (edition.Campaign is null)
         {
             Notes.Add("Campaign missions are listed by their number in the pilot file; this version's mission list is not included yet.");
         }
 
+        Arrange(edition.Campaign, edition.Combat);
+    }
+
+    /// <summary>For tests: a document with explicit mission lists.</summary>
+    internal XwaPilotDocument(XwaPilotFormat format, byte[] data, RecordSchema schema, IReadOnlyList<XwaMissionListEntry>? campaign,
+        IReadOnlyList<XwaMissionListEntry>? combat)
+        : base(data, schema, 1)
+    {
+        _format = format;
+        _edition = XwaEdition.For("xwa");
         Arrange(campaign, combat);
     }
 
@@ -263,6 +301,9 @@ internal sealed class XwaPilotDocument : BinaryPilotDocument
         ["bestPlacement"] = "Best placement", ["award"] = "Award", ["bestBonus"] = "Best bonus",
     };
 
+    private static readonly System.Text.RegularExpressions.Regex StatId =
+        new(@"^(?:main|faction\[(\d)\]\.stats)\.([A-Za-z]+)\[(\d)\](?:\[(\d+)\])?$");
+
     private void Arrange(IReadOnlyList<XwaMissionListEntry>? campaign, IReadOnlyList<XwaMissionListEntry>? combat)
     {
         var layout = BeginLayout();
@@ -274,7 +315,10 @@ internal sealed class XwaPilotDocument : BinaryPilotDocument
                                                 !f.Id.StartsWith("craftKnown[", StringComparison.Ordinal) &&
                                                 f.Id != "skipsRemaining"))
         {
-            layout.Show(field, field.Group);
+            if (Wanted(field))
+            {
+                layout.Show(field, field.Group);
+            }
         }
 
         // Campaign: progression (mission skips) at the root, then one sub-tree per battle and per mission.
@@ -282,7 +326,63 @@ internal sealed class XwaPilotDocument : BinaryPilotDocument
         Missions(layout, "tod", "Campaign", campaign);
         Missions(layout, "combat", "Combat chamber", combat);
 
-        layout.ShowAsIs("craftKnown[").ShowAsIs("faction[");
+        foreach (var field in Fields.Where(f => f.Id.StartsWith("craftKnown[", StringComparison.Ordinal)))
+        {
+            if (Wanted(field))
+            {
+                layout.Show(field, field.Group);
+            }
+        }
+
+        // Career records: each collects one kind of mission, so its statistics are shown without the per-kind level;
+        // the other kinds (normally empty) and the unused record appear only when they hold data.
+        for (var r = 0; r < 4; r++)
+        {
+            var record = Fields.Where(f => f.Id.StartsWith($"faction[{r}].", StringComparison.Ordinal)).ToList();
+            var type = XwaPilotFormat.RecordStatType[r];
+            if (type < 0 && record.All(f => f.Editor == FieldEditor.Text || f.GetInteger() == 0))
+            {
+                continue;
+            }
+
+            foreach (var field in record)
+            {
+                if (!Wanted(field))
+                {
+                    continue;
+                }
+
+                var m = StatId.Match(field.Id);
+                if (type >= 0 && m.Success && m.Groups[3].Value == type.ToString())
+                {
+                    layout.Show(field, field.Group.Replace($"/{XwaPilotFormat.StatTypes[type]}", "", StringComparison.Ordinal));
+                }
+                else if (type < 0 || !m.Success || m.Groups[2].Value == "played" || field.GetInteger() != 0)
+                {
+                    layout.Show(field, field.Group);
+                }
+            }
+        }
+    }
+
+    /// <summary>Craft types the version does not have are shown only when they hold a value.</summary>
+    private bool Wanted(EditableField field)
+    {
+        int craft;
+        if (field.Id.StartsWith("craftKnown[", StringComparison.Ordinal))
+        {
+            craft = int.Parse(field.Id.AsSpan(11, field.Id.Length - 12));
+        }
+        else if (field.Id.Contains("ByCraft[", StringComparison.Ordinal) && StatId.Match(field.Id) is { Success: true } m)
+        {
+            craft = int.Parse(m.Groups[4].Value);
+        }
+        else
+        {
+            return true;
+        }
+
+        return _edition.CraftName(craft) is not null || field.GetInteger() != 0;
     }
 
     private void Missions(DisplayLayout layout, string prefix, string root, IReadOnlyList<XwaMissionListEntry>? list)

@@ -46,7 +46,8 @@ public sealed partial class MainViewModel : ViewModelBase
 
     /// <summary>X-Wing, TIE Fighter and XWVM pilots can be converted.</summary>
     public bool CanConvert => _document is not null && _path is not null &&
-                              _format is Core.Formats.XWing.XWingPilotFormat or Core.Formats.Tie.TiePilotFormat or Core.Formats.Xwvm.XwvmPilotFormat;
+                              (_format is Core.Formats.XWing.XWingPilotFormat or Core.Formats.Tie.TiePilotFormat or Core.Formats.Xwvm.XwvmPilotFormat ||
+                               (_format is Core.Formats.Xwa.XwaPilotFormat && _document.VariantId == Core.Conversion.TftcBridge.VariantId));
     public Command AboutCommand { get; }
     public Command ExitCommand { get; }
 
@@ -184,6 +185,7 @@ public sealed partial class MainViewModel : ViewModelBase
             var document = PilotFormats.Open(path, data, variantId);
             var format = PilotFormats.Detect(path, data)!;
             document.Edition = Edition.For(variantId, format);
+            document.VariantId = variantId;
             _format = format;
             Load(document, path);
             ShowSettings = false;
@@ -320,7 +322,7 @@ public sealed partial class MainViewModel : ViewModelBase
             return;
         }
 
-        await OpenPathAsync(_path, confirm: false, _document.Edition?.Id);
+        await OpenPathAsync(_path, confirm: false, _document.VariantId ?? _document.Edition?.Id);
     }
 
     private async Task ConvertAsync()
@@ -351,13 +353,15 @@ public sealed partial class MainViewModel : ViewModelBase
             return;
         }
 
-        if (PilotConverter.TargetsFor(_format, _document.Edition, data).Count == 0)
+        if (PilotConverter.TargetsFor(_format, _document.Edition, data, _document.VariantId).Count == 0)
         {
-            await MessageDialog.ShowAsync(_window, "Nothing to convert", "This XWVM pilot has no X-Wing or TIE Fighter career.");
+            await MessageDialog.ShowAsync(_window, "Nothing to convert", _format is Core.Formats.Xwa.XwaPilotFormat
+                ? "X-Wing Alliance pilots can be converted only when they are TIE Fighter Total Conversion Classic pilots (open them from that version in the game menu)."
+                : "This XWVM pilot has no X-Wing or TIE Fighter career.");
             return;
         }
 
-        var outcome = await ConvertDialog.ShowAsync(_window, data, _format, _document.Edition, _document.PilotName,
+        var outcome = await ConvertDialog.ShowAsync(_window, data, _format, _document.Edition, _document.VariantId, _document.PilotName,
             variantId => _library.FolderFor(variantId) is { } folder && Directory.Exists(folder) ? folder : null,
             BrowseForVariantAsync);
         if (outcome is null)

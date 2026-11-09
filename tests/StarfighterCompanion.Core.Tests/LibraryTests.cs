@@ -25,11 +25,22 @@ public sealed class LibraryTests : IDisposable
     [InlineData("STAR WARS X-Wing Alliance", "Xwa")]
     [InlineData("XWA", "Xwa")]
     [InlineData("TFTC", "Tftc")]
+    [InlineData("TFTC-R", "Tftc")]
+    [InlineData("XWAU2025", "Xwa")]
+    [InlineData("EMBERS", "Xwa")]
     [InlineData("TIE Fighter Total Conversion", "Tftc")]
     [InlineData("Program Files", "None")]
     [InlineData("Windows", "None")]
     public void Install_folders_are_recognised_by_name(string name, string expected) =>
         Assert.Equal(expected, InstallFinder.Classify(name).ToString());
+
+    [Theory]
+    [InlineData("TFTC-R", true)]
+    [InlineData("TFTC Reimagined", true)]
+    [InlineData("TFTC-C", false)]
+    [InlineData("TFTC", false)]
+    public void Tftc_reimagined_is_told_apart_by_folder_name(string name, bool reimagined) =>
+        Assert.Equal(reimagined, InstallFinder.IsTftcReimagined(name));
 
     [Fact]
     public void Scanner_lists_only_pilots_of_the_variant()

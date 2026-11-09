@@ -30,16 +30,29 @@ always written back unchanged.
 * The name (14 bytes) is read-only: the game matches pilot files by it.
 * The rating name is updated automatically when the rating changes.
 
+* The four "faction" records are career records: Rebel and Imperial (single player picks by the craft flown), and
+  teams 3 and 4, which only fill in multiplayer (the team is the IFF of the player's flight group).
+
 ## Balance of Power — `.pl2`
 
 * Source: OpenXvT `PilotData` in `src/xvt/frontend/pilot_record.h`.
 * Record: **296,238 bytes**. Statistics cover 100 craft types; adds campaigns.
 * BoP keeps `<name>0.pl2` and an XvT-compatible `<name>0.plt` side by side.
 
-## X-Wing Alliance (XWAUP, TFTC) — `.plt`
+## X-Wing Alliance (XWA Upgrade 2025 and 2020, Embers of the Empire, TFTC Classic and Reimagined) — `.plt`
 
 * Source: OpenXWA `PilotData` in `src/xwa/frontend/mission_setup.h`.
-* Record: **152,076 bytes**. Statistics cover 512 craft types. Original XWA/OpenXWA labels are bundled from OpenXWA's documented craft-type list; hidden, unused and unmapped IDs remain numeric. XWAUP/TFTC labels remain numeric until their separate mappings are verified. No game installation is required.
+* Record: **152,076 bytes**. Statistics cover 512 craft types. Craft names are built in per version
+  (`src/StarfighterCompanion.Core/Data/CraftLists`, taken from each version's `SHIPLIST.TXT`; the original game's from
+  OpenXWA's craft-type list). Hidden and unused craft types are shown by number, and only when they hold a value.
+* Statistics are kept three times, once per kind of mission (OpenXWA `fediskio.c`, `statType`): campaign battles,
+  family missions, and everything played outside the campaign (Combat Chamber, skirmish, multiplayer). Each kind is
+  its own sub-tree. "Missions played" is the exception: the game counts it by the list the mission was started from
+  (Missions, Melee, Combat).
+* The four "faction" records are career records by mode (`currentFactionId`): 0 campaign battles, 2 outside the
+  campaign, 3 family missions; record 1 is not used for statistics and is shown only when it holds data. Each record
+  shows only its own kind of mission; the others appear only when they hold data. Award counts are how many missions
+  hold each award level (melee missions, and all others).
 * Values: rating 0–24 (the per-rating mission table has 25 entries), rank 0–8, Kalidor Crescent 0–6, mission skips 0–3.
 
 ## XWVM — `.vmpilot`
@@ -73,8 +86,10 @@ Each format arranges its fields for display (`PilotDocument.BeginLayout`); the f
 * X-Wing Alliance (and XWAUP, TFTC) group Campaign and Combat chamber missions by battle using mission lists built
   into the program (`src/StarfighterCompanion.Core/Data/MissionLists`, in the game's `MISSION.LST` format, read the
   way OpenXWA's `MissionSetup_LoadMissionList` reads it, localisation keys skipped). The Tour of Duty and Combat
-  Chamber tables are both indexed by the mission's number in that list. The XWA list is included; Starfighter
-  Companion never reads game files, and without a built-in list (XWAUP, TFTC for now) missions are listed by number.
+  Chamber tables are both indexed by the mission's number in that list (a campaign mission replayed outside the
+  campaign is recorded in the Combat Chamber table). The XWA Upgrade uses the original list; Embers of the Empire and
+  TFTC Classic and Reimagined have their own, and TFTC's Combat Chamber has its own `COMBAT\MISSION.LST`.
+  Starfighter Companion never reads game files.
 
 ## Converting
 
@@ -101,6 +116,14 @@ Each format arranges its fields for display (`PilotDocument.BeginLayout`); the f
 * **XWVM → X-Wing/TIE** builds a new pilot the way each game's registration creates one (X-Wing: zeros with the
   Combat Chamber unlock bytes at 0xFF; TIE: version 1, training level 2) and fills it in. TIE files get two identical
   copies, X-Wing one. Every XWVM pilot written gets all four game records, because XWVM looks them up unchecked.
+
+* **TIE Fighter ⇄ TFTC Classic** goes through XWVM's TIE Fighter record (`TftcBridge`). Battles 1–13 and their missions
+  map to the `[Battle N: …]` sections of the built-in `tftc.lst` in order (TFTC Classic has the same mission counts),
+  the combat chamber craft to the `<craft> Training` sections of `tftc.combat.lst`, and TIE species *i* to XWA craft
+  type *i* + 1. Into TFTC: the campaign and Combat Chamber missions of those sections, and the campaign kill and weapon
+  statistics (career totals and the campaign-battles record), are replaced; everything else in the existing TFTC
+  pilot is kept. Out of TFTC: a mission counts as done when its completed count is set; kills are summed over the
+  three kinds of mission; the active battle is the last one started and not finished.
 
 ## Adding a format
 

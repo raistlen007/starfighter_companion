@@ -243,6 +243,8 @@ internal static class OriginalXwaCraftNames
         null, // 231
     };
 
+    public static IReadOnlyList<string?> All => Names;
+
     public static string Label(int id) =>
         id >= 0 && id < Names.Length && Names[id] is { } name
             ? $"{name} (craft type {id})"

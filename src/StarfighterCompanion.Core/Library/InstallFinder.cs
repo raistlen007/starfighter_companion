@@ -124,10 +124,10 @@ public sealed partial class InstallFinder
 
                     break;
                 case GameKind.Xwa:
-                    Add(HasXwaHooks(dir) ? "xwaup" : "xwa", dir, source);
+                    Add(XwaVariant(dir), dir, source);
                     break;
                 case GameKind.Tftc:
-                    Add("tftc", dir, source);
+                    Add(IsTftcReimagined(Path.GetFileName(dir.TrimEnd('\\', '/'))) ? "tftcr" : "tftc", dir, source);
                     break;
             }
         }
@@ -166,7 +166,8 @@ public sealed partial class InstallFinder
             return GameKind.Tftc;
         }
 
-        if (n.Contains("alliance") || n == "xwa" || n.StartsWith("xwa ") || n.Contains("xwaup"))
+        if (n.Contains("alliance") || n == "xwa" || n.StartsWith("xwa ") || n.Contains("xwaup") || n.StartsWith("xwau") ||
+            n.Contains("embers of the empire") || n == "embers")
         {
             return GameKind.Xwa;
         }
@@ -513,6 +514,47 @@ public sealed partial class InstallFinder
         try
         {
             return Directory.EnumerateFiles(dir, name, new EnumerationOptions { MatchCasing = MatchCasing.CaseInsensitive, IgnoreInaccessible = true }).Any();
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return false;
+        }
+    }
+
+    /// <summary>TFTC Reimagined is told apart from Classic by its folder name ("TFTC-R", "TFTC Reimagined").</summary>
+    internal static bool IsTftcReimagined(string folderName)
+    {
+        var n = MultiSpace().Replace(folderName.ToLowerInvariant().Replace('_', ' ').Replace('-', ' '), " ").Trim();
+        return n.Contains("reimagined") || n.EndsWith(" r", StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// Which XWA version an installation is, from the files that exist there (their contents are not read):
+    /// Embers of the Empire has EmbersVersion.txt, the 2025 Upgrade adds its installer-runner folder, and the 2020
+    /// Mega Patch only the hooks.
+    /// </summary>
+    private string XwaVariant(string dir)
+    {
+        if (!HasXwaHooks(dir))
+        {
+            return "xwa";
+        }
+
+        if (FileExists(Path.Combine(dir, "EmbersVersion.txt")))
+        {
+            return "embers";
+        }
+
+        return _directoryExists(Path.Combine(dir, "XwaInstallerRunner")) || _directoryExists(Path.Combine(dir, "patcher-xml"))
+            ? "xwaup"
+            : "xwaup2020";
+    }
+
+    private static bool FileExists(string path)
+    {
+        try
+        {
+            return File.Exists(path);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {

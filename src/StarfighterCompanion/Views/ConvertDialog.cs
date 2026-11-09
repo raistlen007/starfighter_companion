@@ -20,11 +20,12 @@ public static class ConvertDialog
         byte[] data,
         PilotFormat format,
         Edition? source,
+        string? sourceVariant,
         string pilotName,
         Func<string, string?> folderFor,
         Func<string, Task<string?>> browseFolder)
     {
-        var targets = PilotConverter.TargetsFor(format, source, data);
+        var targets = PilotConverter.TargetsFor(format, source, data, sourceVariant);
         Outcome? outcome = null;
         ConversionPlan? plan = null;
         string? folder = null;

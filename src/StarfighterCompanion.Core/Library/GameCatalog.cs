@@ -151,15 +151,36 @@ public static class GameCatalog
                 },
                 new VariantDefinition
                 {
-                    Id = "xwaup", GameId = Xwa, Name = "X-Wing Alliance Upgrade (XWAUP)",
-                    Description = "An XWA installation with the XWA Upgrade applied.",
+                    Id = "xwaup", GameId = Xwa, Name = "X-Wing Alliance Upgrade 2025 (XWAU)",
+                    Description = "An XWA installation with the XWA Upgrade 2025 applied.",
                     Accepts = f => f is XwaPilotFormat,
                     SearchDepth = 0,
                 },
                 new VariantDefinition
                 {
-                    Id = "tftc", GameId = Xwa, Name = "TIE Fighter Total Conversion (TFTC)",
-                    Description = "The TFTC installation (a separate copy of XWA).",
+                    Id = "xwaup2020", GameId = Xwa, Name = "XWA Upgrade Mega Patch 2020",
+                    Description = "An XWA installation with the 2020 XWA Upgrade Mega Patch applied.",
+                    Accepts = f => f is XwaPilotFormat,
+                    SearchDepth = 0,
+                },
+                new VariantDefinition
+                {
+                    Id = "embers", GameId = Xwa, Name = "Embers of the Empire",
+                    Description = "The Embers of the Empire campaign for the XWA Upgrade (a separate copy of XWA).",
+                    Accepts = f => f is XwaPilotFormat,
+                    SearchDepth = 0,
+                },
+                new VariantDefinition
+                {
+                    Id = "tftc", GameId = Xwa, Name = "TIE Fighter Total Conversion Classic (TFTC)",
+                    Description = "The TFTC Classic installation (a separate copy of XWA).",
+                    Accepts = f => f is XwaPilotFormat,
+                    SearchDepth = 0,
+                },
+                new VariantDefinition
+                {
+                    Id = "tftcr", GameId = Xwa, Name = "TIE Fighter Total Conversion Reimagined",
+                    Description = "The TFTC Reimagined installation (a separate copy of XWA).",
                     Accepts = f => f is XwaPilotFormat,
                     SearchDepth = 0,
                 },

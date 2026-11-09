@@ -24,7 +24,7 @@ public static class XwvmBridge
     public const string XWingGameId = "xwing";
     public const string TieGameId = "tf";
 
-    private const int Completed = int.MaxValue;
+    internal const int Completed = int.MaxValue;
 
     /// <summary>Games every XWVM pilot carries; XWVM looks them up without checking that they exist.</summary>
     private static readonly string[] AllGameIds = { "xwing", "tf", "xvt", "xwa" };
@@ -67,7 +67,7 @@ public static class XwvmBridge
     };
 
     /// <summary>Training and combat chamber craft, in file order (TIE ship1…ship7; XWVM TieGameData proving grounds list).</summary>
-    private static readonly string[] TieCraft = { "TIEFighter", "TIEInterceptor", "TIEBomber", "TIEAdvanced", "Gunboat", "TIEDefender", "MissileBoat" };
+    internal static readonly string[] TieCraft = { "TIEFighter", "TIEInterceptor", "TIEBomber", "TIEAdvanced", "Gunboat", "TIEDefender", "MissileBoat" };
 
     private const int TieBattles = 13;
     private const string SecretOrderAward = "secretOrderRank";
@@ -357,6 +357,57 @@ public static class XwvmBridge
     // ================================================================================================================
     // XWVM → legacy
     // ================================================================================================================
+
+    // ---- used by the TFTC bridge, which goes through XWVM's TIE Fighter record ----------------------------------------
+
+    /// <summary>A TIE Fighter pilot file as XWVM's TIE Fighter game record.</summary>
+    internal static XElement TieToGame(byte[] tfr, List<string> notes, List<string> warnings) =>
+        FromTie(tfr.AsSpan(0, TiePilotFormat.RecordSize).ToArray(), null, notes, warnings);
+
+    /// <summary>XWVM's TIE Fighter game record as a TIE Fighter pilot file for <paramref name="target"/>.</summary>
+    internal static byte[] GameToTie(XElement game, Edition target, List<string> notes, List<string> warnings)
+    {
+        var record = ToTie(game, target, notes, warnings);
+        var data = record.Concat(record).ToArray();
+        warnings.AddRange(EditionConverter.CheckForEdition(data, target));
+        return data;
+    }
+
+    /// <summary>The TIE Fighter game record of an XWVM pilot, or null.</summary>
+    internal static XElement? TieGameOf(byte[] vmpilot) =>
+        LoadVmpilot(vmpilot).Root!.Elements("PilotGameRecord").FirstOrDefault(e => (string?)e.Attribute("Id") == TieGameId);
+
+    /// <summary>
+    /// Puts a TIE Fighter game record into an XWVM pilot (new, or replacing that game in <paramref name="existingVmpilot"/>
+    /// and keeping the pilot's look and craft preferences).
+    /// </summary>
+    internal static byte[] PutTieGame(XElement game, byte[]? existingVmpilot, string pilotName, List<string> notes)
+    {
+        var document = existingVmpilot is null ? NewPilot(pilotName) : LoadVmpilot(existingVmpilot);
+        var root = document.Root!;
+        var previous = root.Elements("PilotGameRecord").FirstOrDefault(e => (string?)e.Attribute("Id") == TieGameId);
+        foreach (var name in new[] { "Droid", "AvatarPath", "AvatarIndex" })
+        {
+            if (previous?.Attribute(name) is { } attribute)
+            {
+                game.SetAttributeValue(name, attribute.Value);
+            }
+        }
+
+        CarryOver(previous, game);
+        if (previous is not null)
+        {
+            previous.ReplaceWith(game);
+            notes.Add($"The TIE Fighter career of XWVM pilot \"{(string?)root.Attribute("Name")}\" was replaced; the other games in the file were not touched.");
+        }
+        else
+        {
+            InsertGame(root, game);
+        }
+
+        EnsureAllGames(root);
+        return SaveVmpilot(document, existingVmpilot);
+    }
 
     /// <summary>Which games of an XWVM pilot can be exported (have any progress or at least a record).</summary>
     public static IReadOnlyList<GameFamily> ExportableGames(byte[] vmpilot)
@@ -803,7 +854,7 @@ public static class XwvmBridge
 
     // ---- element builders (attribute names and order as XWVM writes them) ----
 
-    private static XElement GameElement(string id, XElement? previous, int rank, int status, int? difficulty, int currentScore, int aiScore)
+    internal static XElement GameElement(string id, XElement? previous, int rank, int status, int? difficulty, int currentScore, int aiScore)
     {
         var difficultyName = difficulty is { } d
             ? Difficulties[Math.Clamp(d, 0, 2)]
@@ -837,10 +888,10 @@ public static class XwvmBridge
         }
     }
 
-    private static XElement Tour(string element, string id, int step) =>
+    internal static XElement Tour(string element, string id, int step) =>
         new(element, new XAttribute("TourId", id), new XAttribute("CurrentTourStep", step.ToString(CultureInfo.InvariantCulture)));
 
-    private static XElement Operation(int step, int score, bool complete) =>
+    internal static XElement Operation(int step, int score, bool complete) =>
         new("PilotOperationRecord",
             new XAttribute("TourStep", step),
             new XAttribute("Score", score),
@@ -852,15 +903,15 @@ public static class XwvmBridge
     private static XElement Training(string craft, int score, int level) =>
         new("TrainingRecord", new XAttribute("CraftType", craft), new XAttribute("HighScore", score), new XAttribute("HighestLevelCompleted", level));
 
-    private static XElement Victory(string entity, int kills, int captures) =>
+    internal static XElement Victory(string entity, int kills, int captures) =>
         new("EntityVictoryRecord", new XAttribute("Id", entity), new XAttribute("Kills", kills), new XAttribute("Captures", captures));
 
-    private static XElement Stat(string id, int value) =>
+    internal static XElement Stat(string id, int value) =>
         new("StatRecord", new XAttribute("Id", id), new XAttribute("Value", value));
 
     // ---- small helpers ----
 
-    private static Dictionary<string, int> Stats(XElement game)
+    internal static Dictionary<string, int> Stats(XElement game)
     {
         var stats = new Dictionary<string, int>();
         foreach (var stat in game.Elements("StatRecord"))
@@ -875,7 +926,7 @@ public static class XwvmBridge
         return stats;
     }
 
-    private static int TourNumber(string? id, string prefix) =>
+    internal static int TourNumber(string? id, string prefix) =>
         id is not null && id.StartsWith(prefix, StringComparison.Ordinal) && int.TryParse(id[prefix.Length..], NumberStyles.None, CultureInfo.InvariantCulture, out var n) ? n : 0;
 
     private static int Index(string[] names, string? value, int fallback = 0)
@@ -884,10 +935,10 @@ public static class XwvmBridge
         return i >= 0 ? i : fallback;
     }
 
-    private static int Int(XElement e, string attribute) =>
+    internal static int Int(XElement e, string attribute) =>
         int.TryParse((string?)e.Attribute(attribute), NumberStyles.Integer, CultureInfo.InvariantCulture, out var v) ? v : 0;
 
-    private static bool Bool(XElement e, string attribute) =>
+    internal static bool Bool(XElement e, string attribute) =>
         bool.TryParse((string?)e.Attribute(attribute), out var v) && v;
 
     private static int NonNegative(int value) => Math.Max(value, 0);

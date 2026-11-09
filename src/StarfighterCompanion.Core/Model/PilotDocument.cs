@@ -176,6 +176,9 @@ public abstract class PilotDocument
     /// </summary>
     public Library.Edition? Edition { get; set; }
 
+    /// <summary>The library version the pilot was opened from, when known.</summary>
+    public string? VariantId { get; set; }
+
     public bool IsDirty { get; private set; }
 
     public event EventHandler<EditableField>? FieldChanged;
