@@ -19,12 +19,13 @@ public static class AboutDialog
 
     public const string XwaUpgradePage = "https://www.xwaupgrade.com/";
 
-    /// <summary>The OpenXW family's author; OpenTIE has no public repository link here yet.</summary>
+    /// <summary>The OpenXW family's author.</summary>
     public const string OpenFamilyAuthor = "https://github.com/elyosh";
 
     public static readonly (string Name, string Url)[] OpenFamily =
     {
         ("OpenXW", "https://github.com/elyosh/OpenXW"),
+        ("OpenTIE", "https://github.com/elyosh/OpenTIE"),
         ("OpenXvT", "https://github.com/elyosh/OpenXvT"),
         ("OpenXWA", "https://github.com/elyosh/OpenXWA"),
     };
