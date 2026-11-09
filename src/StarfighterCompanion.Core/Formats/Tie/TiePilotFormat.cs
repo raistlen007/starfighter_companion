@@ -233,7 +233,7 @@ internal sealed class TiePilotDocument : BinaryPilotDocument
             if (Int($"training.level[{t}]") > Int($"training.maxLevel[{t}]") + 1)
             {
                 yield return CommonRules.Odd(
-                    $"{TrainingShip(t)}: current level is beyond the highest level reached.", Field($"training.level[{t}]"));
+                    $"Training craft {t + 1}: current level is beyond the highest level reached.", Field($"training.level[{t}]"));
             }
         }
 
