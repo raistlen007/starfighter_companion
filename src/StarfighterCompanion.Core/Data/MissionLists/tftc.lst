@@ -1,0 +1,256 @@
+// TIE Fighter Total Conversion Classic campaign missions (from the game's MISSIONS\MISSION.LST, localisation keys removed).
+// Format: [battle], then per mission: number in the pilot file, mission file, title.
+[Pilot Training]
+3
+* 1b0m1tftcTF.tie
+TIE Fighter Combat: Gunnery
+4
+* 1b0m2tftcTI.tie
+TIE Interceptor Combat: Threat Display
+5
+* 1b0m3tftcTB.tie
+TIE Bomber Combat: Proton Torpedoes
+6
+* 1b0m4tftcGUN.tie
+Assault Gunboat Combat: Shields
+[Battle 1: Aftermath of Hoth]
+9
+* 1b1m1tftc.tie
+Patrol Jump Point D-34
+10
+* 1b1m2tftc.tie
+Red Alert!
+11
+* 1b1m3tftc.tie
+Counter-Attack
+12
+* 1b1m4tftc.tie
+Outpost D-34 Has Fallen
+13
+* 1b1m5tftc.tie
+Attack Rebel Light Cruiser
+14
+* 1b1m6tftc.tie
+Destroy the Lulsla
+[Battle 2: The Sepan Civil War]
+15
+* 1b2m1tftc.tie
+Respond To S.O.S
+16
+* 1b2m2tftc.tie
+Intercept Attack
+17
+* 1b2m3tftc.tie
+Rescue War Refugees
+18
+* 1b2m4tftc.tie
+Capture Enemies
+19
+* 1b2m5tftc.tie
+Guard Resupply
+[Battle 3: Battle On The Frontier]
+20
+* 1b3m1tftc.tie
+Load Base Equipment
+21
+* 1b3m2tftc.tie
+Destroy Pirate Outpost
+22
+* 1b3m3tftc.tie
+Hold Position
+23
+* 1b3m4tftc.tie
+Guard Space Station NL-1
+24
+* 1b3m5tftc.tie
+Thrawn Inspects NL-1
+25
+* 1b3m6tftc.tie
+Wait For Relief Forces
+[Battle 4: Conflict At Mylok IV]
+26
+* 1b4m1tftc.tie
+Escort Convoy
+27
+* 1b4m2tftc.tie
+Attack The Nharwaak
+28
+* 1b4m3tftc.tie
+Defend Tech Center
+29
+* 1b4m4tftc.tie
+Diplomatic Meeting
+30
+* 1b4m5tftc.tie
+Rebel Arms Deal
+[Battle 5: Battle for Honour]
+31
+* 1b5m1tftc.tie
+Mineclearing
+32
+* 1b5m2tftc.tie
+Assault Gunboat Recon
+33
+* 1b5m3tftc.tie
+Convoy Attack
+34
+* 1b5m4tftc.tie
+Tactical Superiority
+35
+* 1b5m5tftc.tie
+Capture Harkov
+[Battle 6: Arms Race]
+36
+* 1b6m1tftc.tie
+Protect Prototypes
+37
+* 1b6m2tftc.tie
+Prevent Rebel Ambush
+38
+* 1b6m3tftc.tie
+Convoy Escort
+39
+* 1b6m4tftc.tie
+Punitive Raid
+[Battle 7: Treachery at Ottega]
+40
+* 1b7m1tftc.tie
+Trap the Protector
+41
+* 1b7m2tftc.tie
+Destroy the Akaga
+42
+* 1b7m3tftc.tie
+Retribution
+43
+* 1b7m4tftc.tie
+TIE Defender
+44
+* 1b7m5tftc.tie
+Save the Emperor
+[Battle 8: Strategic Warfare]
+45
+* 1b8m1tftc.tie
+Evacuate TIE Advanced Plants
+46
+* 1b8m2tftc.tie
+Save TIE Advanced Factory
+47
+* 1b8m3tftc.tie
+Secure TIE Advanced Plant
+48
+* 1b8m4tftc.tie
+Supply TIE Advanced Plant
+53
+* 1b8m5tftc.tie
+Capture Mag Pulse Weapon
+54
+* 1b8m6tftc.tie
+Trapped
+[Battle 9: TIE Defender Technology]
+55
+* 1b9m1tftc.tie
+Capture Platform
+56
+* 1b9m2tftc.tie
+Hold Platfrom
+57
+* 1b9m3tftc.tie
+Protect Evacuation
+58
+* 1b9m4tftc.tie
+Escort to Rendezvous
+59
+* 1b9m5tftc.tie
+Trapped by Pirates!
+60
+* 1b9m6tftc.tie
+Transfer Prototypes
+[Battle 10: New Threats]
+61
+* 1b10m1tftc.tie
+Ransom
+62
+* 1b10m2tftc.tie
+Rescue
+63
+* 1b10m3tftc.tie
+Under the Gun
+64
+* 1b10m4tftc.tie
+Missile Boat Diplomacy
+65
+* 1b10m5tftc.tie
+Rebel Assult
+66
+* 1b10m6tftc.tie
+Eliminate TIE Defender Factory
+[Battle 11: Hunt for Zaarin]
+67
+* 1b11m1tftc.tie
+Intercept Convoy
+68
+* 1b11m2tftc.tie
+Preemptive Strike
+69
+* 1b11m3tftc.tie
+Bait and Switch
+70
+* 1b11m4tftc.tie
+Unexpected Attack
+71
+* 1b11m5tftc.tie
+The Real Thing
+72
+* 1b11m6tftc.tie
+Protect Vorknkx Project
+73
+* 1b11m7tftc.tie
+Evacuate!
+[Battle 12: Prelude to Endor]
+74
+* 1b12m1tftc.tie
+Escort Prison Ship
+75
+* 1b12m2tftc.tie
+Deliver Prisoners
+76
+* 1b12m3tftc.tie
+Attack at Bothuwui
+77
+* 1b12m4tftc.tie
+Strike on Kothlis
+78
+* 1b12m5tftc.tie
+Bothan Treachery
+79
+* 1b12m6tftc.tie
+Recon Military Summit
+80
+* 1b12m7tftc.tie
+Delay Strike Force
+[Battle 13: The Emperor's Will]
+81
+* 1b13m1tftc.tie
+Surprise Attack
+82
+* 1b13m2tftc.tie
+Capture the Turncoat
+83
+* 1b13m3tftc.tie
+Track Down Rebel
+84
+* 1b13m4tftc.tie
+Missile Boat Trouble
+85
+* 1b13m5tftc.tie
+Return to Vorknkx
+86
+* 1b13m6tftc.tie
+Corvette Attack
+87
+* 1b13m7tftc.tie
+Zaarin Takes the Bait!
+88
+* 1b13m8tftc.tie
+The Trap is Sprung!

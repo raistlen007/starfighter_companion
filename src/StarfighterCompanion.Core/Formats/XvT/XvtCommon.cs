@@ -231,7 +231,13 @@ internal static class XvtCommon
         }
     }
 
-    public static string FactionLabel(int i) => $"Faction record {i + 1}";
+    /// <summary>
+    /// The four career records ("factions"). In single player the game picks Rebel or Imperial by the craft flown; in
+    /// multiplayer by the team (IFF) of the player's flight group, so records 3 and 4 only fill in multiplayer games
+    /// (OpenXvT frontend_mission.c, currentFactionId).
+    /// </summary>
+    public static string FactionLabel(int i) =>
+        new[] { "Career: Rebel", "Career: Imperial", "Career: team 3 (multiplayer)", "Career: team 4 (multiplayer)" }[i];
 
     /// <summary>Rules common to XvT, BoP and XWA.</summary>
     public static IEnumerable<ValidationIssue> MissionRules(PilotDocument doc, string prefix, int count)

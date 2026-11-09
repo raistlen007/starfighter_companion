@@ -64,7 +64,7 @@ public class LayoutTests
     public void Xwa_campaigns_follow_a_mission_list()
     {
         var list = XwaMissionList.Parse(new[] { "[Family Missions]", "1", "1b0m1.tie", "The Mining Guild", "[Battle 1]", "7", "* 1b1m1.tie", "!M0101!" });
-        var doc = new XwaPilotDocument(new XwaPilotFormat(), new byte[XwaPilotFormat.RecordSize], XwaPilotFormat.Schema, true, list, null);
+        var doc = new XwaPilotDocument(new XwaPilotFormat(), new byte[XwaPilotFormat.RecordSize], XwaPilotFormat.Schema, list, null);
 
         Assert.Equal("Campaign", GroupOf(doc, "skipsRemaining"));
         Assert.Equal("Campaign/Family Missions/1. The Mining Guild", GroupOf(doc, "tod[1].bestScore"));
@@ -82,6 +82,36 @@ public class LayoutTests
         Assert.Equal("Combat chamber/Battle 1: Clearing the Way/1. Convoy Attack", GroupOf(doc, "combat[9].bestScore"));
     }
 
+    [Theory]
+    [InlineData("embers", "tod[53].bestScore", "Campaign/Battle 8: The Cavrilhu Betrayal/1. Recon at Ywllandr & Nosken")]
+    [InlineData("tftc", "tod[9].bestScore", "Campaign/Battle 1: Aftermath of Hoth/1. Patrol Jump Point D-34")]
+    [InlineData("tftcr", "tod[7].bestScore", "Campaign/Pilot Training/5. Prologue")]
+    [InlineData("tftc", "combat[0].bestScore", "Combat chamber/TIE Fighter Training/1. Gunnery")]
+    [InlineData("tftcr", "combat[9].bestScore", "Combat chamber/TIE Interceptor Training/1. Threat Display")]
+    [InlineData("xwaup", "tod[9].bestScore", "Campaign/Battle 1: Clearing the Way/1. Convoy Attack")]
+    [InlineData("xwaup2020", "combat[9].bestScore", "Combat chamber/Battle 1: Clearing the Way/1. Convoy Attack")]
+    public void Every_xwa_version_has_its_missions_built_in(string variant, string id, string group) =>
+        Assert.Equal(group, GroupOf(PilotFormats.Open("PILOT.plt", new byte[XwaPilotFormat.RecordSize], variant), id));
+
+    [Fact]
+    public void Xwa_statistics_are_grouped_by_kind_of_mission()
+    {
+        var data = new byte[XwaPilotFormat.RecordSize];
+        var doc = PilotFormats.Open("PILOT.plt", data, "xwa");
+
+        Assert.Equal("Career statistics/Family missions", GroupOf(doc, "main.kills[1]"));
+        Assert.Equal("Career statistics/Outside the campaign/Kills by craft", GroupOf(doc, "main.killsByCraft[2][5]"));
+
+        // A career record only shows the kind of mission it collects, without the extra level.
+        Assert.Equal("Career: family missions/Statistics", GroupOf(doc, "faction[3].stats.kills[1]"));
+        Assert.DoesNotContain(doc.DisplayFields, f => f.Id == "faction[3].stats.kills[0]");
+        Assert.DoesNotContain(doc.DisplayFields, f => f.Id.StartsWith("faction[1].", StringComparison.Ordinal));
+
+        // Craft types the version does not have are hidden while empty.
+        Assert.DoesNotContain(doc.DisplayFields, f => f.Id == "main.killsByCraft[0][300]");
+        Assert.Contains(doc.DisplayFields, f => f.Id == "main.killsByCraft[0][1]");
+    }
+
     [Fact]
     public void Localisation_keys_are_skipped()
     {
@@ -97,10 +127,10 @@ public class LayoutTests
         {
             Directory.CreateDirectory(Path.Combine(dir, "MISSIONS"));
             File.WriteAllText(Path.Combine(dir, "MISSIONS", "MISSION.LST"), "[From the install]\r\n1\r\n1b0m1.tie\r\nShould not appear\r\n");
-            var doc = PilotFormats.Open(Path.Combine(dir, "PILOT.plt"), new byte[XwaPilotFormat.RecordSize], "tftc");
+            var doc = PilotFormats.Open(Path.Combine(dir, "PILOT.plt"), new byte[XwaPilotFormat.RecordSize], "xwa");
 
             Assert.DoesNotContain(doc.DisplayFields, f => f.Group.Contains("From the install"));
-            Assert.Equal("Campaign/Mission 1", GroupOf(doc, "tod[1].bestScore"));
+            Assert.Equal("Campaign/Prologue: Family Business/2. Emon's Lesson: Weapons", GroupOf(doc, "tod[1].bestScore"));
         }
         finally
         {
@@ -121,7 +151,7 @@ public class LayoutTests
     {
         var doc = PilotFormats.Open("Keyan0.plt", new byte[Formats.XvT.XvtPilotFormat.RecordSize]);
         var field = doc.DisplayFields.Single(f => f.Id == "faction[0].spMelee[4].bestScore");
-        Assert.Equal("Faction record 1/Single player/Melee missions/Mission 5", field.Group);
+        Assert.Equal("Career: Rebel/Single player/Melee missions/Mission 5", field.Group);
         Assert.Equal("Best score", field.Label);
     }
 

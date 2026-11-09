@@ -14,7 +14,7 @@ into a state that the game cannot handle.
 | TIE Fighter (1994 floppy, 1995 CD-ROM, 1998 Windows, GOG/Steam) | `.tfr` | current + backup record are kept in step |
 | X-Wing vs. TIE Fighter | `.plt` | |
 | Balance of Power | `.pl2` | BoP also keeps an XvT `.plt` next to it |
-| X-Wing Alliance, XWA Upgrade (XWAUP), TIE Fighter Total Conversion (TFTC) | `.plt` | |
+| X-Wing Alliance, XWA Upgrade 2025 and 2020, Embers of the Empire, TIE Fighter Total Conversion Classic and Reimagined | `.plt` | craft names and mission lists of each version are built in |
 | OpenXW, OpenTIE, OpenXvT, OpenXWA | as the original games | they read and write the original formats |
 | XWVM | `.vmpilot` | XML; unknown content is preserved |
 
@@ -33,7 +33,7 @@ Close the game before editing its pilots — most of them write the pilot file w
 ## Using it
 
 The left side is a game menu: pick a game, then a version (X-Wing 1993 / 1994 / 1998, TIE Fighter 1994 / 1995 / 1998,
-Balance of Power, XWAUP, OpenXW…),
+Balance of Power, XWA Upgrade, TFTC, OpenXW…),
 and the pilots in that version's folder are listed. Click one to edit it; **Back to game menu** takes you back.
 
 Installed games are found automatically:

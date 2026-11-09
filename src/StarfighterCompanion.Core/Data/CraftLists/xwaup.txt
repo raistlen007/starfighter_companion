@@ -1,0 +1,177 @@
+// X-Wing Alliance Upgrade 2025 craft names by craft type, from the game's SHIPLIST.TXT.
+// Hidden ("*") and unused ("DontUseMe") entries are left out; Starfighter Companion shows those by number.
+1	X-Wing Starfighter
+2	Y-Wing Starfighter
+3	A-Wing Interceptor
+4	B-Wing Starfighter
+5	TIE Fighter
+6	TIE Interceptor
+7	TIE Bomber
+8	TIE Avenger
+9	TIE Defender
+10	Authority IRD
+11	Toscan Fighter
+12	Missile Boat
+13	T-Wing Interceptor
+14	Z-95 Headhunter
+15	R-41 Starchaser
+16	Assault Gunboat
+17	Lambda Shuttle
+18	Escort Shuttle
+19	System Patrol Craft
+20	Scout Craft
+21	Stormtrooper Transport
+22	Assault Transport
+23	Escort Transport
+24	Utility Tug
+25	Combat Utility Vehicle
+26	Container A - Brick
+27	Container B - Hexbox
+28	Container C - Tube
+29	Container D - Pronged
+30	Heavy Lifter
+31	Mole Miner
+32	Bulk Freighter
+33	Cargo Ferry
+34	Modular Conveyor
+35	Container Transport
+36	Medium Transport
+37	Muurian Transport
+38	YT-1300 Transport
+39	Millennium Falcon
+40	Corellian Corvette
+41	Modified Corvette
+42	Nebulon-B Frigate
+43	Nebulon-B2 Frigate
+44	C-3 Passenger Liner
+45	Carrack Cruiser
+46	Strike Cruiser
+47	Escort Carrier
+48	Dreadnaught
+49	MC80A Calamari Star Cruiser
+50	MC40a Light Cruiser
+51	Interdictor
+52	Victory I Star Destroyer
+53	Imperial I Star Destroyer
+54	Super Star Destroyer
+55	Container E - Hemisphere
+56	Container F - Slotted
+57	Container G - Hourglass
+58	Container H - Gem
+59	Container I - Y shaped
+60	Platform 1
+61	Platform 2
+62	Platform 3
+63	Platform 4
+64	Platform 5
+65	Platform 6
+66	Asteroid Hangar
+67	Ast Laser Battery
+68	Ast Warhead Launcher
+69	Deep Space Facility
+70	Comm Sat 1
+71	Comm Sat 2
+72	Comm Sat 3
+75	Mine Type A - Lasers
+76	Mine Type B - Ions
+77	Mine Type C - Warheads
+78	Gun Emplacement
+80	Probe 1
+81	Probe Capsule
+83	Type 1 Navigation Buoy
+84	Type 2 Navigation Buoy
+85	Hyper Buoy
+86	Asteroid
+87	Planet
+88	Rendezvous Buoy
+89	Cargo Canister
+90	Shipyard
+91	Repair Yard
+92	Modified Strike Cruiser
+93	Lancer Frigate
+94	Bulk Cruiser
+95	Assault Frigate
+96	Corellian Gunship
+97	Sentinel Landing Craft
+98	Assault Shuttle
+99	Marauder Corvette
+100	Star Galleon
+101	Imperial Research Ship
+102	Luxury Yacht
+103	Ferryboat Liner
+104	Modified Action Transport
+105	Mobquet Transport
+106	Xiytiar Transport
+107	Freight Transport/C
+108	Freight Transport/H
+109	Freight Transport/K
+110	YT-2000 Transport
+111	YT-2400 Transport
+112	Suprosa Transport
+113	Skipray Blastboat
+114	TIE Experimental M1
+115	TIE Experimental M2
+116	TIE Experimental M3
+117	TIE Experimental M4
+118	TIE Experimental M5
+119	Cloakshape Fighter
+120	Razor Fighter
+121	Planetary Fighter
+122	Supa Fighter
+123	Pinook Fighter
+124	TIE Advanced x1
+125	Preybird Fighter
+127	Firespray Attack Ship
+128	Pursuer Enforcement Ship
+129	Golan One
+130	Golan Two
+131	Golan Three
+132	Derilyn Platform
+133	Sensor Array
+134	Comm Relay
+135	Space Colony 1
+136	Space Colony 2
+137	Space Colony 3
+138	Casino
+139	Cargo Facility 1
+140	Cargo Facility 2
+141	Asteroid Mining Unit
+142	Processing Plant
+143	Rebel Alliance Platform
+144	Imperial Research Centre
+145	Azzameen Station
+146	Twin Suns Repair Yard
+147	Pirate Asteroid Base
+148	Industrial Complex
+150	Escape Pod
+151	Pressure Tank
+152	Container J - Grande
+153	Container K - Box
+154	Container L - Sphere
+155	Container Hangar
+156	Large Gun Emplacement
+157	Large Gun/Warhead Emplacement
+158	Proximity Mine A
+159	Proximity Mine B
+160	Homing Mine A
+161	Homing Mine B
+162	Laser Battery
+163	Ion Battery
+174	Escape Pod Deluxe
+178	Zero-G Stormtrooper
+179	Zero-G Utility Worker
+180	MK-09 Droid
+181	Astromech Droid
+182	Worker Droid
+183	BACKDROP
+186	U-Wing Starfighter
+195	VCX-100 Light Freighter
+214	Quasar Fire-class Carrier
+216	Gozanti Cruiser
+217	MC80 Reef Home Star Cruiser
+218	MC80 Home One Star Cruiser
+219	Imperial Nebulon-B Frigate
+227	Death Star II
+228	MC80 Liberty Star Cruiser
+229	Victory II Star Destroyer
+230	Imperial II Star Destroyer

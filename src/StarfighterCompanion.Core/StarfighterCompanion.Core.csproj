@@ -17,6 +17,7 @@
   <ItemGroup>
     <!-- Mission lists built into the program (see Data/MissionLists/README.md). -->
     <EmbeddedResource Include="Data\MissionLists\*.lst" />
+    <EmbeddedResource Include="Data\CraftLists\*.txt" />
   </ItemGroup>
 
 </Project>

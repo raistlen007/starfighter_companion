@@ -1,0 +1,235 @@
+// Embers of the Empire campaign missions (from the game's MISSIONS\MISSION.LST, localisation keys removed).
+// Format: [battle], then per mission: number in the pilot file, mission file, title.
+[Battle 8: The Cavrilhu Betrayal]
+53
+* 1b8m1fw.tie
+Recon at Ywllandr & Nosken
+54
+* 1b8m2fw.tie
+Decoy at Ompersan
+55
+* 1b8m3fw.tie
+Theft at Anorelga
+56
+* 1b8m4fw.tie
+Cavrilhu Betrayal
+[Battle 9: Ore Conflict At Cezith]
+57
+* 1b9m1fw.tie
+Annani Ambition
+58
+* 1b9m2fw.tie
+The Annani Slavers
+59
+* 1b9m3fw.tie
+The Braxant Blockade
+60
+* 1b9m4fw.tie
+The Rescue of The Cezith
+61
+* 1b9m5fw.tie
+Assault on Annan
+[Battle 10: Uprising At Bescane]
+62
+* 1b10m1fw.tie
+Uprising and Abduction
+63
+* 1b10m2fw.tie
+!MISSION_63_DESC! Rescue at Karavis
+64
+* 1b10m3fw.tie
+Prisoner Exchange at Gabredor
+65
+* 1b10m4fw.tie
+Raid at Fegorosk
+66
+* 1b10m5fw.tie
+Assault on the Ironjaw
+[Battle 11: The Empire of The Hand]
+67
+* 1b11m1fw.tie
+Meeting at Nirauan
+68
+* 1b11m2fw.tie
+The Fall of Csilla Aia'rum'ie
+69
+* 1b11m3fw.tie
+Csilla Customs Detail
+70
+* 1b11m4fw.tie
+Battle of the Chiss
+71
+* 1b11m5fw.tie
+Expansion at Csilla Aia'rum'ie
+[Battle 12: The Bilbringi Offensive]
+72
+* 1b12m1fw.tie
+Prelude to Bilbringi
+73
+* 1b12m2fw.tie
+Second Battle of Bilbringi
+74
+* 1b12m3fw.tie
+Assault on the Lusankya Pt. 1
+75
+* 1b12m4fw.tie
+Assault on the Lusankya Pt. 2
+76
+* 1b12m5fw.tie
+Attack on Freitek Incorporated
+77
+* 1b12m6fw.tie
+The Cloaked X-Wing
+[Battle 13: The Farlander Counterattack]
+78
+* 1b13m1fw.tie
+Battle of Anemcoro
+79
+* 1b13m2fw.tie
+Evacuation of Ord Biniir
+80
+* 1b13m3fw.tie
+Reload Operation at Prefsbelt
+81
+* 1b13m4fw.tie
+Intervention at Comra
+82
+* 1b13m5fw.tie
+Assault at Graa'tar
+83
+* 1b13m6fw.tie
+The Battle of Bastion
+[Battle 14: The Thyferran Campaign]
+84
+* 1b14m1fw.tie
+The Xucphra Alliance
+85
+* 1b14m2fw.tie
+Assault at Iqobal
+86
+* 1b14m3fw.tie
+Tauber Bacta Cache
+87
+* 1b14m4fw.tie
+Admiral Tallon's Recovery Attempt
+88
+* 1b14m5fw.tie
+The Second Battle of Thyferra
+[Battle 15: The Phantom TIE Project]
+89
+* 1b15m1fw.tie
+Information Raid at Coruscant
+90
+* 1b15m2fw.tie
+Return to Imdaar Alpha
+91
+* 1b15m3fw.tie
+Securing Maramere
+92
+* 1b15m4fw.tie
+Stygium Delivery to Fondor
+93
+* 1b15m5fw.tie
+Second Battle of Fondor
+94
+* 1b15m6fw.tie
+Incursion at Abregado
+95
+* 1b15m7fw.tie
+Battle of Bestine IV
+[Battle 16: Assault on Mon Calamari]
+96
+* 1b16m1fw.tie
+Bombardment at Ruisto
+97
+* 1b16m2fw.tie
+The Minntooine Spur Blockade
+98
+* 1b16m3fw.tie
+Alliance at Eridicon
+99
+* 1b16m4fw.tie
+Battle of Mon Calamari
+[Battle 17: Crisis in the New Republic]
+100
+* 1b17m1fw.tie
+Strike at Alsakan
+101
+* 1b17m2fw.tie
+Defection at Opatajji
+102
+* 1b17m3fw.tie
+Personnel Distribution at Chandrila
+103
+* 1b17m4fw.tie
+The Hunt for Krane's Fleet
+104
+* 1b17m5fw.tie
+Clues at Reecee
+105
+* 1b17m6fw.tie
+Trap at Jagga VII
+[Battle 18: Imperial Center]
+106
+* 1b18m1fw.tie
+Incursion into Drall and Selonia
+107
+* 1b18m2fw.tie
+Raid at Talus
+108
+* 1b18m3fw.tie
+Assembling at Thorgeld
+109
+* 1b18m4fw.tie
+Third Battle of Coruscant
+110
+* 1b18m5fw.tie
+Blockade over Sector 943
+[Battle 19: A New Movement]
+111
+* 1b19m1fw.tie
+Assault on Corsin
+112
+* 1b19m2fw.tie
+Encounter at Bogden 3
+113
+* 1b19m3fw.tie
+Raid at Myrkr
+114
+* 1b19m4fw.tie
+Battle of Brentaal IV
+115
+* 1b19m5fw.tie
+Ambush at Kashyyyk
+[Battle 20: The Dark Jedi of Belderone]
+116
+* 1b20m1fw.tie
+Intel Raid at Bragkis
+117
+* 1b20m2fw.tie
+Conflict at Mandalore
+118
+* 1b20m3fw.tie
+Rescue at the Voragos Nebula
+119
+* 1b20m4fw.tie
+Chase at Galidraan
+120
+* 1b20m5fw.tie
+Attack at Cordus
+[Battle 21: The Corellian Campaign]
+121
+* 1b21m1fw.tie
+Recon in the Core
+122
+* 1b21m2fw.tie
+Battle of Bellassa
+123
+* 1b21m3fw.tie
+Liberation of Duro
+124
+* 1b21m4fw.tie
+Parley at Traxal II
+125
+* 1b21m5fw.tie
+Battle of Corellia

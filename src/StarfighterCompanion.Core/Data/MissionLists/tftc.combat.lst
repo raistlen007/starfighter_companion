@@ -1,0 +1,97 @@
+// TIE Fighter Total Conversion Combat Chamber missions (from the game's COMBAT\MISSION.LST; the same in Classic and Reimagined, localisation keys removed).
+// Format: [battle], then per mission: number in the pilot file, mission file, title.
+[TIE Fighter Training]
+0
+1b14m1tftcTF.tie
+Gunnery
+2
+1b14m2tftcTF.tie
+Flight Leaders & Wingmen
+3
+1b14m3tftcTF.tie
+Destroy Depot
+4
+1b14m4tftcTF.tie
+Destroy a Probe
+[TIE Interceptor Training]
+9
+* 1b15m1tftcTI.tie
+Threat Display
+10
+* 1b15m2tftcTI.tie
+Ambush!
+11
+* 1b15m3tftcTI.tie
+Clear Minefield
+12
+* 1b15m4tftcTI.tie
+Combined Attack
+[TIE Bomber Training]
+13
+* 1b16m1tftcTB.tie
+Proton Torpedoes
+14
+* 1b16m2tftcTB.tie
+Space Bombs
+15
+* 1b16m3tftcTB.tie
+Torpedo Run
+16
+* 1b16m4tftcTB.tie
+Bombers Armed with Missiles
+[Assault Gunboat Training]
+17
+* 1b17m1tftcGUN.tie
+Shields
+18
+* 1b17m2tftcGUN.tie
+Teamwork
+19
+* 1b17m3tftcGUN.tie
+The Challenge
+20
+* 1b17m4tftcGUN.tie
+Escort Duty
+[TIE Advanced Training]
+21
+* 1b18m1tftcTA.tie
+Concussion Missiles
+22
+* 1b18m2tftcTA.tie
+Rocket Attack
+23
+* 1b18m3tftcTA.tie
+Preemptive Strike
+24
+* 1b18m4tftcTA.tie
+Hyperdrive Upgrade
+[TIE Defender Training]
+25
+* 1b19m1tftcTD.tie
+Dogfighting!
+26
+* 1b19m2tftcTD.tie
+Tractor Beam
+27
+* 1b19m3tftcTD.tie
+Inspect and Disable
+28
+* 1b19m4tftcTD.tie
+Disable and Capture
+[Missile Boat Training]
+29
+* 1b20m1tftcMIS.tie
+Dual Warheads
+30
+* 1b20m2tftcMIS.tie
+Anti-warhead Defense
+31
+* 1b20m3tftcMIS.tie
+Disabling Minefield
+32
+* 1b20m4tftcMIS.tie
+Missile Boat vs. TIE Defender
+[TIE Fighter Demo Mission]
+33
+* 1b21m1tftcDEMO.tie
+Ambush Rebels

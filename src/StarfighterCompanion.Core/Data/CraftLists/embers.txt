@@ -1,0 +1,218 @@
+// Embers of the Empire craft names by craft type, from the game's SHIPLIST.TXT.
+// Hidden ("*") and unused ("DontUseMe") entries are left out; Starfighter Companion shows those by number.
+1	X-Wing
+2	Y-Wing
+3	A-Wing
+4	B-Wing
+5	TIE Fighter
+6	TIE Interceptor
+7	TIE Bomber
+8	TIE Avenger
+9	TIE Defender
+10	Authority IRD
+11	Toscan Fighter
+12	Missile Boat
+13	T-Wing
+14	Z-95 Headhunter
+15	R-41 Starchaser
+16	Assault Gunboat
+17	Lambda Shuttle
+18	Escort Shuttle
+19	System Patrol Craft
+20	Scout Craft
+21	Stormtrooper Transport
+22	Assault Transport
+23	Escort Transport
+24	Utility Tug
+25	Combat Utility Vehicle
+26	CN/A Brick
+27	X4 Gunship
+28	YE-4 Gunship
+29	Chiss Heavy Assault Cruiser
+30	Heavy Lifter
+31	Mole Miner
+32	Bulk Freighter
+33	Cargo Ferry
+34	Modular Conveyor
+35	Container Transport
+36	Medium Transport
+37	Muurian Transport
+38	YT-1300 Transport
+39	Dynamic Freighter
+40	Corellian Corvette
+41	Modified Corvette
+42	Nebulon-B Frigate
+43	Nebulon-B2 Frigate
+44	C-3 Passenger Liner
+45	Carrack Cruiser
+46	Strike Cruiser
+47	Escort Carrier
+48	Dreadnaught
+49	MC80A Calamari Star Cruiser
+50	MC40a Light Cruiser
+51	Interdictor
+52	Bothan Light Assault Cruiser
+53	MC75 Profundity
+54	Super Star Destroyer
+55	CN/E Hemisphere
+56	Resurgent Class Star Destroyer
+57	Warlord Heavy Cruiser
+58	Supreme Battleship
+59	Dhilani Trident
+60	Platform 1
+61	M-22 Krayt Gunship
+62	Seraphim-class Destroyer
+63	Imperial Cargo Transport
+64	Combat Cloud Car
+65	YB-300 Light Transport
+66	Asteroid Hangar
+67	Ast Laser Battery
+68	MC-75 Barracuda
+69	Deep Space Facility
+70	Comm Sat 1
+71	Comm Sat 2
+72	Comm Sat 3
+75	MineA
+76	MineB
+77	MineC
+78	Gun Emplacement
+80	Probe1
+81	Probe Capsule
+83	Type 1 Navigation Buoy
+84	Type 2 Navigation Buoy
+85	Hyper Buoy
+86	Asteroid
+87	Planet
+88	Rendezvous Buoy
+89	Sovereign Super Star Destroyer
+90	Shipyard
+91	Repair Yard
+92	Dodonna Interdictor Cruiser
+93	Lancer Frigate
+94	Bulk Cruiser
+95	Assault Frigate
+96	Corellian Gunship
+97	Sentinel Landing Craft
+98	Assault Shuttle
+99	Marauder Corvette
+100	Star Galleon
+101	Imperial Research Ship
+102	Luxury Yacht
+103	Ferryboat Liner
+104	Modified Action Transport
+105	Mobquet Transport
+106	Xiytiar Transport
+107	Freight Transport/C
+108	Freight Transport/H
+109	Freight Transport/K
+110	YT-2000 Transport
+111	YT-2400 Transport
+112	Suprosa Transport
+113	Skipray Blastboat
+114	Astro SubCruiser
+115	Z-95 Mk.II Headhunter
+116	Z-95 Mk. I Headhunter
+117	TIE Striker
+118	U-Wing
+119	Cloakshape Fighter
+120	Razor Fighter
+121	Planetary Fighter
+122	Supa Fighter
+123	Pinook Fighter
+124	AEG-77 Vigo Gunship
+125	Preybird Fighter
+127	Firespray Attack Ship
+128	Inferno Destroyer
+129	Golan One
+130	Golan Two
+131	Golan Three
+132	Derilyn Platform
+133	Sensor Array
+134	Comm Relay
+135	Space Colony 1
+136	Space Colony 2
+137	Space Colony 3
+138	Casino
+139	Cargo Facility 1
+140	Cargo Facility 2
+141	Bulwark II class Flag Cruiser
+142	Processing Plant
+143	Rebel Alliance Platform
+144	Imperial Research Centre
+145	M-12 Kimogila
+146	Twin Suns Repair Yard
+147	Pirate Ship Yard
+148	Industrial Complex
+149	Tycon Battlestation
+150	Escape Pod
+151	Interdictor Cruiser
+152	Inferno II
+153	CN/K Box
+154	CN/L Sphere
+155	Container Hangar
+156	Large Gun Emplacement
+157	Large G/W Emplacement
+158	Proximity Mine A
+159	Proximity Mine B
+160	Homing Mine A
+161	Homing Mine B
+162	Laser Battery
+163	Ion Battery
+167	Principal Freighter
+168	Piranha
+171	AT-AT Barge
+172	Quasar Escort Carrier
+173	Modular Star Hauler
+174	Escape Pod Deluxe
+178	CSX-600
+179	Raider Class Corvette
+180	YT-1760 Transport
+181	Normandy SR2
+183	BACKDROP
+184	TIE Phantom
+185	E-Wing
+186	Pelta Frigate Carrier Refit
+187	K-Wing
+188	Bothan Assault Cruiser
+189	Seafire
+190	Sith fighter
+191	TIE Lancer
+192	Victory MK III
+193	Harkners-Balix Transport
+194	Scimitar Assault Bomber
+195	HWK-290
+196	Raven's Claw
+197	Nssis Shadowcraft
+198	Fang Fighter
+199	Liberator Cruiser
+200	Nssis TIE Archer
+201	YKL-37R Nova Courier
+202	Chiss Warship
+203	Viper
+204	Nssis Clawcraft
+205	VCX-100 Freighter
+206	Hammerhead cruiser
+207	MC85 Radduses
+208	Emperors Fortress
+209	Aurek
+210	Banking Clan Frigate
+211	Commerce Guild Destroyer
+212	MC80B Mon Remonda Star Cruiser
+213	MC90 Defiance Star Cruiser
+214	MC104 Odysseus Battlecruiser
+215	Blockade Runner
+216	Trade Federation Cruiser
+217	MC80 Reef Home Star Cruiser
+218	MC80 Home One Star Cruiser
+219	Predator Star Destroyer
+220	Vindicator Heavy Cruiser
+221	Ecliptic Star Frigate
+222	Vengeance Battlecruiser
+223	Dominance Battlecruiser
+224	Warhammer Heavy Cruiser
+227	Death Star II
+228	MC80 Liberty Star Cruiser
+229	Victory II Star Destroyer
+230	Imperial Star Destroyer
+231	Trade Federation Battleship
+232	Katana Warship
