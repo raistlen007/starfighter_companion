@@ -48,6 +48,13 @@ public sealed class GameArtService
             return Task.FromResult<Bitmap?>(null);
         }
 
+        // The open-source reimplementations keep pilots in a user folder with no program in it; their own icons
+        // (from each project's packaging/icons, GPL-3.0) are built in.
+        if (BuiltInIcon(variantId) is { } builtIn)
+        {
+            return Task.FromResult<Bitmap?>(builtIn);
+        }
+
         lock (_lock)
         {
             if (_icons.TryGetValue((variantId, folder), out var cached))
@@ -101,6 +108,29 @@ public sealed class GameArtService
                     return null;
                 }
             });
+        }
+    }
+
+    private static readonly string[] BuiltInIcons = { "openxw", "opentie", "openxvt", "openxwa", "xwvm" };
+    private readonly Dictionary<string, Bitmap?> _builtIn = new();
+
+    private Bitmap? BuiltInIcon(string variantId)
+    {
+        if (!BuiltInIcons.Contains(variantId))
+        {
+            return null;
+        }
+
+        lock (_lock)
+        {
+            if (!_builtIn.TryGetValue(variantId, out var bitmap))
+            {
+                var uri = new Uri($"avares://StarfighterCompanion/Assets/GameIcons/{variantId}.png");
+                bitmap = AssetLoader.Exists(uri) ? new Bitmap(AssetLoader.Open(uri)) : null;
+                _builtIn[variantId] = bitmap;
+            }
+
+            return bitmap;
         }
     }
 
