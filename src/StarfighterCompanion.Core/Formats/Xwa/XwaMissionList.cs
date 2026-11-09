@@ -7,10 +7,11 @@ namespace StarfighterCompanion.Core.Formats.Xwa;
 public sealed record XwaMissionListEntry(string Section, int MissionIndex, string FileName, string Title);
 
 /// <summary>
-/// Reads X-Wing Alliance's <c>MISSION.LST</c> (MISSIONS\ for the campaign, COMBAT\ for the Combat Chamber), the way
-/// the game does (OpenXWA MissionSetup_LoadMissionList): "//" lines are comments, "[Name]" starts a section, and each
+/// Reads mission lists in the format of X-Wing Alliance's <c>MISSION.LST</c> (MISSIONS\ for the campaign, COMBAT\ for
+/// the Combat Chamber), the way the game does (OpenXWA MissionSetup_LoadMissionList): "//" lines are comments, "[Name]" starts a section, and each
 /// mission is three lines: its index in the pilot file, its file name (a leading "* " or "&amp; " marks it locked),
-/// and its title. XWAUP and TFTC ship their own lists, so each installation shows its own campaigns.
+/// and its title. XWAUP and TFTC have their own lists; the ones included with
+/// Starfighter Companion are built into the program, so nothing is read from the game installation.
 /// </summary>
 public static class XwaMissionList
 {
@@ -21,7 +22,7 @@ public static class XwaMissionList
         var pending = new List<string>(3);
         foreach (var raw in lines)
         {
-            var line = raw.TrimEnd('\r', '\n');
+            var line = WithoutKey(raw.TrimEnd('\r', '\n'));
             if (line.StartsWith("//", StringComparison.Ordinal) || line.Trim().Length == 0)
             {
                 continue;
@@ -57,38 +58,49 @@ public static class XwaMissionList
         return result;
     }
 
-    /// <summary>Looks for <c>&lt;folder&gt;\MISSION.LST</c> next to the pilot file or one or two folders up.</summary>
-    public static IReadOnlyList<XwaMissionListEntry>? Find(string? pilotPath, string folder)
+    /// <summary>
+    /// The campaign mission list built into Starfighter Companion for an edition (xwa, xwaup or tftc), or null if
+    /// none is included. Lists are compiled in from src/StarfighterCompanion.Core/Data/MissionLists/&lt;edition&gt;.lst;
+    /// the editor never reads game files.
+    /// </summary>
+    public static IReadOnlyList<XwaMissionListEntry>? BuiltIn(string edition)
     {
-        if (string.IsNullOrEmpty(pilotPath))
+        var name = $"MissionLists.{edition}.lst";
+        var assembly = typeof(XwaMissionList).Assembly;
+        var resource = assembly.GetManifestResourceNames().FirstOrDefault(r => r.EndsWith(name, StringComparison.OrdinalIgnoreCase));
+        if (resource is null)
         {
             return null;
         }
 
-        try
+        using var stream = assembly.GetManifestResourceStream(resource)!;
+        using var reader = new StreamReader(stream, Encoding.Latin1);
+        var lines = new List<string>();
+        while (reader.ReadLine() is { } line)
         {
-            var dir = Path.GetDirectoryName(Path.GetFullPath(pilotPath));
-            for (var level = 0; level < 3 && dir is not null; level++, dir = Path.GetDirectoryName(dir))
-            {
-                var sub = Directory.Exists(dir)
-                    ? Directory.EnumerateDirectories(dir).FirstOrDefault(d => string.Equals(Path.GetFileName(d), folder, StringComparison.OrdinalIgnoreCase))
-                    : null;
-                var file = sub is null
-                    ? null
-                    : Directory.EnumerateFiles(sub).FirstOrDefault(f => string.Equals(Path.GetFileName(f), "MISSION.LST", StringComparison.OrdinalIgnoreCase));
-                if (file is not null)
-                {
-                    var list = Parse(File.ReadAllLines(file, Encoding.Latin1));
-                    return list.Count > 0 ? list : null;
-                }
-            }
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
-        {
-            // No readable list: the editor falls back to plain mission numbers.
+            lines.Add(line);
         }
 
-        return null;
+        var entries = Parse(lines);
+        return entries.Count > 0 ? entries : null;
+    }
+
+    /// <summary>
+    /// Lines may start with a localisation key ("!MISSION_9_DESC!Convoy Attack"); the game replaces it with the
+    /// translated text, and the English text follows it. Keep the text.
+    /// </summary>
+    private static string WithoutKey(string line)
+    {
+        if (line.Length > 2 && line[0] == '!')
+        {
+            var end = line.IndexOf('!', 1);
+            if (end > 1 && line.AsSpan(1, end - 1).IndexOfAny(" \t") < 0 && end + 1 < line.Length)
+            {
+                return line[(end + 1)..];
+            }
+        }
+
+        return line;
     }
 
     private static int LeadingInt(string text)

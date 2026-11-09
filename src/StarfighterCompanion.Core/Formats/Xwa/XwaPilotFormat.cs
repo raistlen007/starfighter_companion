@@ -40,8 +40,18 @@ public sealed class XwaPilotFormat : PilotFormat
         // Original XWA IDs may be repurposed by XWAU/TFTC; do not guess their names.
         var original = variantId is null or "xwa" or "openxwa";
         return new XwaPilotDocument(this, data, original ? Schema : GenericSchemaInstance.Value, original,
-            XwaMissionList.Find(fileName, "MISSIONS"), XwaMissionList.Find(fileName, "COMBAT"));
+            // Both tables are indexed by the mission's number in the campaign list (OpenXWA mission_setup.c shows a
+            // mission's Tour and Combat Chamber records side by side).
+            XwaMissionList.BuiltIn(ListEdition(variantId)), XwaMissionList.BuiltIn(ListEdition(variantId)));
     }
+
+    /// <summary>Which built-in mission list fits the library version the pilot came from.</summary>
+    private static string ListEdition(string? variantId) => variantId switch
+    {
+        "xwaup" => "xwaup",
+        "tftc" => "tftc",
+        _ => "xwa",
+    };
 
     private static RecordSchema BuildSchema(Func<int, string> craft)
     {
@@ -237,7 +247,7 @@ internal sealed class XwaPilotDocument : BinaryPilotDocument
             : "Craft types are listed by ID until this edition's (XWAU/TFTC) craft mappings are verified.");
         if (campaign is null)
         {
-            Notes.Add("Campaign missions are listed by number: the installation's MISSIONS\\MISSION.LST was not found next to the pilot.");
+            Notes.Add("Campaign missions are listed by their number in the pilot file; this version's mission list is not included yet.");
         }
 
         Arrange(campaign, combat);
