@@ -80,6 +80,12 @@ internal sealed class XwvmPilotDocument : PilotDocument
         Build(root);
         Notes.Add("XWVM pilots are XML; unknown elements and attributes are kept as they are.");
         Notes.Add("Close XWVM before saving: it rewrites every pilot file when it exits.");
+
+        // Each operation of a tour and each proving-ground craft keeps several values: one sub-tree each.
+        BeginLayout().ShowRestSplitting(f =>
+            f.Group.Contains("/Tours of Duty/", StringComparison.Ordinal) ||
+            f.Group.Contains("/Historical missions/", StringComparison.Ordinal) ||
+            f.Group.EndsWith("/Proving grounds", StringComparison.Ordinal));
     }
 
     public override string GameName => _format.Game;

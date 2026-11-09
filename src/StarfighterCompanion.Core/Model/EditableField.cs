@@ -42,10 +42,10 @@ public abstract class EditableField
     public string Id { get; }
 
     /// <summary>Slash separated group path used to build the navigation tree (e.g. <c>Career/Kills</c>).</summary>
-    public string Group { get; }
+    public string Group { get; internal set; }
 
     /// <summary>Human readable name.</summary>
-    public string Label { get; }
+    public string Label { get; internal set; }
 
     /// <summary>Optional longer explanation shown as a tooltip.</summary>
     public string? Help { get; init; }
@@ -224,4 +224,35 @@ public abstract class EditableField
     }
 
     public override string ToString() => $"{Group}/{Label} = {DisplayValue}";
+}
+
+/// <summary>One bit of another (byte) field shown as its own yes/no value, e.g. "secret objective of mission 3".</summary>
+public sealed class BitFlagField : EditableField
+{
+    private readonly EditableField _source;
+    private readonly int _bit;
+
+    public BitFlagField(string id, string group, string label, EditableField source, int bit)
+        : base(id, group, label)
+    {
+        _source = source;
+        _bit = bit;
+        Editor = FieldEditor.Flag;
+        Minimum = 0;
+        Maximum = 1;
+        IsReadOnly = source.IsReadOnly;
+    }
+
+    public override long GetInteger() => (_source.GetInteger() >> _bit) & 1;
+
+    protected override void WriteInteger(long value)
+    {
+        var current = _source.GetInteger();
+        var updated = value != 0 ? current | (1L << _bit) : current & ~(1L << _bit);
+        var error = _source.TrySetInteger(updated);
+        if (error is not null)
+        {
+            throw new InvalidOperationException(error);
+        }
+    }
 }

@@ -35,7 +35,7 @@ public sealed class TiePilotFormat : PilotFormat
 
     // Training/Combat Chamber ship slots, not the 69-species kill-statistics index.
     // OpenTIE shipext_Find_Mission_Ship confirms slots 1-7; 8-12 remain unknown.
-    private static readonly string[] TrainingShips =
+    internal static readonly string[] TrainingShips =
     {
         "TIE Fighter", "TIE Interceptor", "TIE Bomber", "TIE Advanced",
         "Assault Gunboat", "TIE Defender", "Missile Boat",
@@ -43,6 +43,9 @@ public sealed class TiePilotFormat : PilotFormat
 
     private static string TrainingShip(int i) =>
         i < TrainingShips.Length ? $"{TrainingShips[i]} (Craft {i + 1})" : $"Craft {i + 1}";
+
+    /// <summary>Missions per battle (XWVM todStagesTie.json; battles 1-13).</summary>
+    internal static readonly int[] BattleMissions = { 6, 5, 6, 5, 5, 4, 5, 6, 6, 6, 7, 7, 8 };
 
     internal static readonly string[] Ranks = { "Cadet", "Officer", "Lieutenant", "Captain", "Commander", "General" };
 
@@ -193,6 +196,100 @@ internal sealed class TiePilotDocument : BinaryPilotDocument
         _format = format;
         PilotName = Path.GetFileNameWithoutExtension(fileName);
         Notes.Add("TIE Fighter stores the pilot's name as the file name, so it cannot be changed here.");
+        Arrange();
+    }
+
+    private void Arrange()
+    {
+        // The secret and bonus objectives are one bit per mission; show each as its own yes/no value.
+        var secret = new Dictionary<(int, int), EditableField>();
+        var bonus = new Dictionary<(int, int), EditableField>();
+        for (var b = 0; b < TiePilotFormat.BattleCount; b++)
+        {
+            for (var m = 0; m < 8; m++)
+            {
+                var s = new BitFlagField($"battle.secret[{b}][{m}]", "", "Secret objective completed", Field($"battle.secretBits[{b}]"), m)
+                {
+                    Help = "Completing a mission's secret objective counts towards the Emperor's Secret Order.",
+                };
+                var o = new BitFlagField($"battle.bonus[{b}][{m}]", "", "Bonus objectives completed", Field($"battle.bonusBits[{b}]"), m);
+                AddField(s);
+                AddField(o);
+                secret[(b, m)] = s;
+                bonus[(b, m)] = o;
+            }
+        }
+
+        var layout = BeginLayout();
+
+        // Career progression, including the Secret Order.
+        layout.ShowAsIs("version").ShowAsIs("rank").ShowAsIs("difficulty").ShowAsIs("score").ShowAsIs("avgScore")
+              .ShowAsIs("secretOrder").ShowAsIs("secretCompletions").ShowAsIs("secretScore");
+
+        string CraftName(int c) => c < TiePilotFormat.TrainingShips.Length ? TiePilotFormat.TrainingShips[c] : $"Craft slot {c + 1}";
+
+        for (var c = 0; c < TiePilotFormat.ShipCount; c++)
+        {
+            var ids = new[] { $"training.level[{c}]", $"training.score[{c}]", $"training.maxLevel[{c}]" };
+            if (c >= TiePilotFormat.TrainingShips.Length && layout.AllZero(ids, defaultValue: 2))
+            {
+                continue; // slots no craft uses
+            }
+
+            var group = $"Training simulator/{CraftName(c)}";
+            layout.Show(ids[0], group, "Selected level")
+                  .Show(ids[1], group, "High score")
+                  .Show(ids[2], group, "Highest level available");
+        }
+
+        for (var c = 0; c < TiePilotFormat.ShipCount; c++)
+        {
+            var ids = Enumerable.Range(0, 8).SelectMany(m => new[] { $"combat.score[{c}][{m}]", $"combat.complete[{c}][{m}]" }).ToArray();
+            if (c >= TiePilotFormat.TrainingShips.Length && layout.AllZero(ids))
+            {
+                continue;
+            }
+
+            for (var m = 0; m < 8; m++)
+            {
+                var group = $"Combat chamber/{CraftName(c)}/Mission {m + 1}";
+                layout.Show($"combat.score[{c}][{m}]", group, "High score")
+                      .Show($"combat.complete[{c}][{m}]", group, "Completed");
+            }
+        }
+
+        // Battles: the battle being flown at the root; each battle's progress, then one sub-tree per mission.
+        layout.Show("battle.current", "Battles");
+        for (var b = 0; b < TiePilotFormat.BattleCount; b++)
+        {
+            var missions = b < TiePilotFormat.BattleMissions.Length ? TiePilotFormat.BattleMissions[b] : 0;
+            var battleIds = new[] { $"battle.status[{b}]", $"battle.mission[{b}]", $"battle.secretBits[{b}]", $"battle.bonusBits[{b}]" }
+                .Concat(Enumerable.Range(0, 8).Select(m => $"battle.score[{b}][{m}]"));
+            if (missions == 0 && layout.AllZero(battleIds))
+            {
+                continue; // battles 14-20 do not exist
+            }
+
+            var group = missions == 0 ? $"Battles/Battle {b + 1} (not in the game)" : $"Battles/Battle {b + 1}";
+            layout.Show($"battle.status[{b}]", group, "Status")
+                  .Show($"battle.mission[{b}]", group, "Missions completed");
+
+            for (var m = 0; m < 8; m++)
+            {
+                var used = m < missions;
+                if (!used && layout.AllZero(new[] { $"battle.score[{b}][{m}]" }) && secret[(b, m)].GetInteger() == 0 && bonus[(b, m)].GetInteger() == 0)
+                {
+                    continue;
+                }
+
+                var mission = used ? $"{group}/Mission {m + 1}" : $"{group}/Unused slot {m + 1}";
+                layout.Show($"battle.score[{b}][{m}]", mission, "High score")
+                      .Show(secret[(b, m)], mission)
+                      .Show(bonus[(b, m)], mission);
+            }
+        }
+
+        layout.ShowAsIs("stats.");
     }
 
     public override string GameName => _format.Game;
