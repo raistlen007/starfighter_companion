@@ -44,12 +44,19 @@ always written back unchanged.
 
 ## XWVM — `.vmpilot`
 
-* Source: XWVM `Assets/Code/GameState/*.cs`.
+* Source: XWVM `Assets/Code/GameState/*.cs` and `Assets/Code/GameMetadata`.
 * XML: `<PilotRecord Name>` with one `<PilotGameRecord Id="xwing|tf|xvt|xwa">` per game, containing tour, historic,
   training, award, kill and statistic records.
+* The editor lists everything XWVM reads, not only what the file holds: for X-Wing and TIE Fighter every tour
+  (`tour1`-`tour5` with 12/12/14/20/20 operations; `battle1`-`battle13`), historical group (`xcombat`, `ycombat`,
+  `acombat`, `bcombat`, `bonus`; `ship1`-`ship7`), proving-ground craft, the stored award (`kalidor` 0-5,
+  `secretOrderRank` 0-8), kills and captures per craft, and the stat records. Medals, battle patches, historical coins,
+  objective pins and flight badges are not stored; XWVM derives them from these records.
+* A missing record is created only when one of its values is changed, with the attributes XWVM requires
+  (a tour needs `CurrentTourStep`, or XWVM fails to load the pilot) and in XWVM's own element order.
 * The document is edited in place, so unknown elements and attributes survive.
-* Rules: the active tour must have a tour record (XWVM fails to load the pilot otherwise); a tour's
-  `CurrentTourStep` of 2147483647 means completed.
+* Rules: the active tour must be started; a tour's step must be a real operation or 2147483647 (completed);
+  every pilot should have all four game records (XWVM looks them up unchecked).
 
 ## Navigation tree
 
