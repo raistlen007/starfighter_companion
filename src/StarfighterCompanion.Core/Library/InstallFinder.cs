@@ -142,7 +142,9 @@ public sealed partial class InstallFinder
             Add("xwvm", folder, "user folder");
         }
 
-        return found;
+        // When a version turns up in several folders, the one that holds the game's program comes first: a Steam
+        // folder left behind after uninstalling (pilots and ddraw files only) must not hide the real installation.
+        return found.OrderBy(f => GameIcons.HasProgramOrUnknown(f.VariantId, f.Folder) ? 0 : 1).ToList();
     }
 
     /// <summary>XWVM's installer id (innosetup/xwvm.iss AppID); Inno Setup records the install folder under it.</summary>
@@ -235,7 +237,8 @@ public sealed partial class InstallFinder
             return GameKind.Xwa;
         }
 
-        if (n.Contains("vs tie") || n.Contains("vs. tie") || n.Contains("versus tie") || n == "xvt" || n.Contains("balance of power"))
+        if (n.Contains("vs tie") || n.Contains("vs. tie") || n.Contains("versus tie") || n == "xvt" || n.EndsWith(" xvt", StringComparison.Ordinal) ||
+            n.Contains("balance of power"))
         {
             return GameKind.XvT;
         }

@@ -26,6 +26,8 @@ public sealed class LibraryTests : IDisposable
     [InlineData("XWA", "Xwa")]
     [InlineData("TFTC", "Tftc")]
     [InlineData("TFTC-R", "Tftc")]
+    [InlineData("Star Wars - XvT", "XvT")]
+    [InlineData("OpenXvT", "None")]
     [InlineData("XWAU2025", "Xwa")]
     [InlineData("EMBERS", "Xwa")]
     [InlineData("TIE Fighter Total Conversion", "Tftc")]
@@ -33,6 +35,21 @@ public sealed class LibraryTests : IDisposable
     [InlineData("Windows", "None")]
     public void Install_folders_are_recognised_by_name(string name, string expected) =>
         Assert.Equal(expected, InstallFinder.Classify(name).ToString());
+
+    [Fact]
+    public void A_folder_with_the_game_program_wins_over_a_leftover_one()
+    {
+        var steam = Directory.CreateDirectory(Path.Combine(_root, "steam", "STAR WARS X-Wing vs TIE Fighter")).FullName;
+        File.WriteAllBytes(Path.Combine(steam, "Rasi0.plt"), new byte[16]); // left behind after uninstalling
+        var gog = Directory.CreateDirectory(Path.Combine(_root, "games", "Star Wars - XvT")).FullName;
+        File.WriteAllBytes(Path.Combine(gog, "Z_XVT__.EXE"), new byte[16]);
+
+        var finder = new InstallFinder();
+        finder.ExtraSearchRoots.Add(Path.Combine(_root, "steam"));
+        finder.ExtraSearchRoots.Add(Path.Combine(_root, "games"));
+        var xvt = finder.DetectAll().Where(d => d.VariantId == "xvt").Select(d => d.Folder).ToList();
+        Assert.Equal(new[] { gog, steam }, xvt);
+    }
 
     [Fact]
     public void Programs_of_pilot_only_versions_are_found_by_folder_name()
