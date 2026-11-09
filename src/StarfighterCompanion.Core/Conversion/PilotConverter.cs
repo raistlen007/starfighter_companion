@@ -17,7 +17,7 @@ public sealed record ConversionTarget(string Label, Edition? Edition, bool IsTft
     /// <summary>The library version whose folder the new file goes to.</summary>
     public string VariantId => IsTftc ? TftcBridge.VariantId : Edition?.Id ?? GameCatalog.Xwvm;
 
-    internal static ConversionTarget Tftc { get; } = new("TIE Fighter Total Conversion Classic (into an existing pilot)", null, IsTftc: true);
+    internal static ConversionTarget Tftc { get; } = new("TIE Fighter Total Conversion Classic", null, IsTftc: true);
 
     public override string ToString() => Label;
 }
@@ -88,7 +88,7 @@ public static class PilotConverter
 
         if (target.IsTftc)
         {
-            return string.IsNullOrWhiteSpace(name) ? "Enter the name of the TFTC pilot to write into." : null;
+            return TftcBridge.CheckNewName(name);
         }
 
         if (string.IsNullOrWhiteSpace(name))
@@ -110,12 +110,19 @@ public static class PilotConverter
 
         if (target.IsTftc)
         {
-            var pilot = FindTftcPilot(folder, name)
-                        ?? throw new ArgumentException($"There is no TFTC pilot named \"{name}\" in this folder. Create the pilot in TFTC first, then convert into it.");
-            var existingPlt = File.ReadAllBytes(pilot);
-            var converted = format is XwvmPilotFormat ? TftcBridge.FromXwvm(data, existingPlt) : TftcBridge.FromTie(data, existingPlt);
+            var pilot = FindTftcPilot(folder, name);
+            var basePlt = pilot is null ? TftcBridge.NewPilot(name) : File.ReadAllBytes(pilot);
+            var converted = format is XwvmPilotFormat ? TftcBridge.FromXwvm(data, basePlt) : TftcBridge.FromTie(data, basePlt);
+            if (pilot is null)
+            {
+                var path = TftcBridge.NewPilotPath(folder, name);
+                return new ConversionPlan(converted, path, false,
+                    $"A new TFTC pilot \"{name}\" ({System.IO.Path.GetFileName(path)}) will be created with this TIE Fighter career.");
+            }
+
             return new ConversionPlan(converted, pilot, true,
-                $"The TIE Fighter career will be written into the TFTC pilot \"{name}\" ({System.IO.Path.GetFileName(pilot)}); a backup is kept.");
+                $"TFTC already has a pilot named \"{name}\" ({System.IO.Path.GetFileName(pilot)}). Its TIE Fighter career will be replaced; " +
+                "its pilot training, rating, awards and the rest are kept (a backup is kept).");
         }
 
         if (format is XwaPilotFormat)

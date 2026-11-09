@@ -68,8 +68,8 @@ version; the open file itself is not changed.
 * **TIE Fighter ⇄ TIE Fighter Total Conversion Classic ⇄ XWVM.** TFTC Classic has TIE Fighter's battles and Combat
   Chamber missions one for one, so battle progress, mission scores, Combat Chamber missions, kills by craft and weapon
   statistics move across. TFTC has no place for TIE Fighter's rank, Secret Order, secret and bonus objectives or
-  training simulator levels. A TFTC pilot holds much more than TIE Fighter knows about, so a career is written *into
-  an existing TFTC pilot* (create it in TFTC first); its pilot training, rating, awards and the rest are kept. Open TFTC
+  training simulator levels. Without a TFTC pilot of that name, a new one is created the way TFTC registers pilots;
+  with one, its TIE Fighter career is replaced and its pilot training, rating, awards and the rest are kept. Open TFTC
   pilots from the TFTC Classic version in the game menu to convert them.
 
 The new file goes into that version's folder from Settings (or one you pick), named after the pilot. The DOS editions

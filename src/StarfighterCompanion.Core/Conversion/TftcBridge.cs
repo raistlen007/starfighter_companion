@@ -156,7 +156,7 @@ public static partial class TftcBridge
     // XWVM's TIE Fighter record → TFTC
     // ================================================================================================================
 
-    /// <summary>Writes the career into an existing TFTC pilot. Everything else in the pilot is kept.</summary>
+    /// <summary>Writes the career into a TFTC pilot (an existing one, or <see cref="NewPilot"/>). Everything else in the pilot is kept.</summary>
     internal static byte[] FromGame(XElement game, byte[] existingPlt, List<string> notes, List<string> warnings)
     {
         var doc = Open(existingPlt);
@@ -259,6 +259,104 @@ public static partial class TftcBridge
                   "its pilot training, rating, awards and everything else are kept.");
         notes.Add("TFTC has no rank, Secret Order, secret or bonus objectives or training simulator levels in TIE Fighter's form; those were not carried over.");
         return doc.Save();
+    }
+
+    // ================================================================================================================
+    // A new TFTC pilot
+    // ================================================================================================================
+
+    /// <summary>Longest pilot name: the name field holds 14 bytes with the terminating zero.</summary>
+    public const int NameMaxLength = 13;
+
+    /// <summary>
+    /// A new pilot as TFTC Classic registers one (OpenXWA Pilot_CreateNew): zeros, the name, rating 2 with TFTC's
+    /// title for it, three mission skips, the multiplayer game and host names, the first campaign and melee missions
+    /// selected, and the craft TFTC's SHIPLIST.TXT marks Known unlocked in the tech library. The values that come from
+    /// TFTC's own files (rating title FRONTTXT.TXT string 24 "Civilian", string 353 "'s Game", the first melee mission
+    /// 58 from MELEE\MISSION.LST, the Known craft) were taken once from a TFTC Classic installation.
+    /// </summary>
+    public static byte[] NewPilot(string name)
+    {
+        const int Tour = 4, Skirmish = 3, FirstMelee = 58;
+        var data = new byte[XwaPilotFormat.RecordSize];
+        var doc = Open(data);
+        doc.Field("name").ForceText(name);
+        doc.Field("rating").ForceInteger(2);
+        doc.Field("ratingName").ForceText("Civilian");
+        doc.Field("skipsRemaining").ForceInteger(3);
+        doc.Field("gameName").ForceText(name + "'s Game");
+        doc.Field("hostName").ForceText(name + "'s Game");
+        foreach (var craft in KnownCraft())
+        {
+            doc.Field($"craftKnown[{craft}]").ForceInteger(1);
+        }
+
+        data = doc.Save();
+
+        // The selected mission per mission directory is not an editor field; place it by the fields around it
+        // (PilotData: team, missionDirectoryId, missionDescriptionIds[7] right before the multiplayer game name, and
+        // PilotFaction: totalMissionsPlayedCount, team, missionDirectoryId, missionDescriptionIds[7]).
+        int Offset(string id) => XwaPilotFormat.Schema.Fields.Single(f => f.Id == id).Offset;
+        void Put(int offset, int value) => System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian(data.AsSpan(offset), value);
+        var selected = Offset("gameName") - 4 * 7;
+        int FactionDirectory(int f) => Offset($"faction[{f}].missionsPlayed") + 8;
+        int FactionSelected(int f, int directory) => FactionDirectory(f) + 4 + 4 * directory;
+
+        var firstTour = Edition.Campaign![0].MissionIndex;
+        Put(selected + 4 * Tour, firstTour);
+        Put(FactionDirectory(0), Tour);
+        Put(FactionSelected(0, Tour), firstTour);
+
+        Put(selected, FirstMelee);
+        Put(FactionSelected(0, 1), FirstMelee);
+        Put(FactionSelected(2, 1), FirstMelee);
+        Put(FactionDirectory(2), Skirmish);
+        return data;
+    }
+
+    /// <summary>Returns why <paramref name="name"/> cannot be a new TFTC pilot's name, or null.</summary>
+    public static string? CheckNewName(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return "Enter a name.";
+        }
+
+        if (name.Length > NameMaxLength)
+        {
+            return $"TFTC pilot names can be at most {NameMaxLength} characters.";
+        }
+
+        return name.Any(c => c < 32 || c > 126 || Path.GetInvalidFileNameChars().Contains(c) || c is '\\' or '/' or ':' or '*' or '?' or '"' or '<' or '>' or '|')
+            ? "Use letters, digits and simple punctuation only."
+            : null;
+    }
+
+    /// <summary>The file name the game gives a new pilot: &lt;name&gt;0.plt, or the next free number.</summary>
+    public static string NewPilotPath(string folder, string name)
+    {
+        for (var i = 0; ; i++)
+        {
+            var path = Path.Combine(folder, $"{name}{i}.plt");
+            if (!File.Exists(path))
+            {
+                return path;
+            }
+        }
+    }
+
+    private static IEnumerable<int> KnownCraft()
+    {
+        var assembly = typeof(TftcBridge).Assembly;
+        var resource = assembly.GetManifestResourceNames().Single(n => n.EndsWith("CraftLists.tftc.known.txt", StringComparison.OrdinalIgnoreCase));
+        using var reader = new StreamReader(assembly.GetManifestResourceStream(resource)!);
+        while (reader.ReadLine() is { } line)
+        {
+            if (int.TryParse(line.Trim(), out var id) && id is > 0 and < XwaPilotFormat.CraftTypes)
+            {
+                yield return id;
+            }
+        }
     }
 
     private static PilotDocument Open(byte[] plt)
