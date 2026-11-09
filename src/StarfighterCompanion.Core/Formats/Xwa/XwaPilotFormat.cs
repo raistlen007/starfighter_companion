@@ -40,7 +40,9 @@ public sealed class XwaPilotFormat : PilotFormat
         // Original XWA IDs may be repurposed by XWAU/TFTC; do not guess their names.
         var original = variantId is null or "xwa" or "openxwa";
         return new XwaPilotDocument(this, data, original ? Schema : GenericSchemaInstance.Value, original,
-            XwaMissionList.BuiltIn(ListEdition(variantId), "campaign"), XwaMissionList.BuiltIn(ListEdition(variantId), "combat"));
+            // Both tables are indexed by the mission's number in the campaign list (OpenXWA mission_setup.c shows a
+            // mission's Tour and Combat Chamber records side by side).
+            XwaMissionList.BuiltIn(ListEdition(variantId)), XwaMissionList.BuiltIn(ListEdition(variantId)));
     }
 
     /// <summary>Which built-in mission list fits the library version the pilot came from.</summary>

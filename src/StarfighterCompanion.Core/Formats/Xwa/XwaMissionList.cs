@@ -22,7 +22,7 @@ public static class XwaMissionList
         var pending = new List<string>(3);
         foreach (var raw in lines)
         {
-            var line = raw.TrimEnd('\r', '\n');
+            var line = WithoutKey(raw.TrimEnd('\r', '\n'));
             if (line.StartsWith("//", StringComparison.Ordinal) || line.Trim().Length == 0)
             {
                 continue;
@@ -59,13 +59,13 @@ public static class XwaMissionList
     }
 
     /// <summary>
-    /// The mission list built into Starfighter Companion for an edition (XWA, XWAUP or TFTC) and list
-    /// ("campaign" or "combat"), or null if none is included. Lists are compiled in from
-    /// src/StarfighterCompanion.Core/Data/MissionLists/&lt;edition&gt;.&lt;list&gt;.lst; the editor never reads game files.
+    /// The campaign mission list built into Starfighter Companion for an edition (xwa, xwaup or tftc), or null if
+    /// none is included. Lists are compiled in from src/StarfighterCompanion.Core/Data/MissionLists/&lt;edition&gt;.lst;
+    /// the editor never reads game files.
     /// </summary>
-    public static IReadOnlyList<XwaMissionListEntry>? BuiltIn(string edition, string list)
+    public static IReadOnlyList<XwaMissionListEntry>? BuiltIn(string edition)
     {
-        var name = $"MissionLists.{edition}.{list}.lst";
+        var name = $"MissionLists.{edition}.lst";
         var assembly = typeof(XwaMissionList).Assembly;
         var resource = assembly.GetManifestResourceNames().FirstOrDefault(r => r.EndsWith(name, StringComparison.OrdinalIgnoreCase));
         if (resource is null)
@@ -83,6 +83,24 @@ public static class XwaMissionList
 
         var entries = Parse(lines);
         return entries.Count > 0 ? entries : null;
+    }
+
+    /// <summary>
+    /// Lines may start with a localisation key ("!MISSION_9_DESC!Convoy Attack"); the game replaces it with the
+    /// translated text, and the English text follows it. Keep the text.
+    /// </summary>
+    private static string WithoutKey(string line)
+    {
+        if (line.Length > 2 && line[0] == '!')
+        {
+            var end = line.IndexOf('!', 1);
+            if (end > 1 && line.AsSpan(1, end - 1).IndexOfAny(" \t") < 0 && end + 1 < line.Length)
+            {
+                return line[(end + 1)..];
+            }
+        }
+
+        return line;
     }
 
     private static int LeadingInt(string text)

@@ -65,8 +65,9 @@ Each format arranges its fields for display (`PilotDocument.BeginLayout`); the f
 * TIE Fighter's secret and bonus objective bytes are shown as one yes/no value per mission.
 * X-Wing Alliance (and XWAUP, TFTC) group Campaign and Combat chamber missions by battle using mission lists built
   into the program (`src/StarfighterCompanion.Core/Data/MissionLists`, in the game's `MISSION.LST` format, read the
-  way OpenXWA's `MissionSetup_LoadMissionList` reads it). Starfighter Companion never reads game files; without a
-  built-in list for the edition, missions are listed by their number in the pilot file.
+  way OpenXWA's `MissionSetup_LoadMissionList` reads it, localisation keys skipped). The Tour of Duty and Combat
+  Chamber tables are both indexed by the mission's number in that list. The XWA list is included; Starfighter
+  Companion never reads game files, and without a built-in list (XWAUP, TFTC for now) missions are listed by number.
 
 ## Converting
 
