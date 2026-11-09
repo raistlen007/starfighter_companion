@@ -2,19 +2,22 @@ using System.Xml;
 using StarfighterCompanion.Core.Formats;
 using StarfighterCompanion.Core.Formats.Tie;
 using StarfighterCompanion.Core.Formats.XWing;
+using StarfighterCompanion.Core.Formats.Xwa;
 using StarfighterCompanion.Core.Formats.Xwvm;
 using StarfighterCompanion.Core.Library;
 
 namespace StarfighterCompanion.Core.Conversion;
 
 /// <summary>Something a pilot can be converted into.</summary>
-public sealed record ConversionTarget(string Label, Edition? Edition)
+public sealed record ConversionTarget(string Label, Edition? Edition, bool IsTftc = false)
 {
-    /// <summary>The target is XWVM (Edition is null).</summary>
-    public bool IsXwvm => Edition is null;
+    /// <summary>The target is XWVM (no edition, not TFTC).</summary>
+    public bool IsXwvm => Edition is null && !IsTftc;
 
     /// <summary>The library version whose folder the new file goes to.</summary>
-    public string VariantId => Edition?.Id ?? GameCatalog.Xwvm;
+    public string VariantId => IsTftc ? TftcBridge.VariantId : Edition?.Id ?? GameCatalog.Xwvm;
+
+    internal static ConversionTarget Tftc { get; } = new("TIE Fighter Total Conversion Classic (into an existing pilot)", null, IsTftc: true);
 
     public override string ToString() => Label;
 }
@@ -26,7 +29,8 @@ public sealed record ConversionPlan(ConversionResult Result, string Path, bool O
 public static class PilotConverter
 {
     /// <summary>The editions and games a pilot file can be converted into.</summary>
-    public static IReadOnlyList<ConversionTarget> TargetsFor(PilotFormat format, Edition? source, byte[] data)
+    /// <param name="sourceVariant">The library version the pilot was opened from (tells TFTC pilots from other XWA pilots).</param>
+    public static IReadOnlyList<ConversionTarget> TargetsFor(PilotFormat format, Edition? source, byte[] data, string? sourceVariant = null)
     {
         var targets = new List<ConversionTarget>();
         switch (format)
@@ -34,14 +38,28 @@ public static class PilotConverter
             case XWingPilotFormat or TiePilotFormat when source is not null:
                 targets.AddRange(source.Siblings.Where(e => e != source).Select(e => new ConversionTarget(e.Name, e)));
                 targets.Add(new ConversionTarget("XWVM", null));
+                if (source.Family == GameFamily.Tie)
+                {
+                    targets.Add(ConversionTarget.Tftc);
+                }
+
                 break;
 
             case XwvmPilotFormat:
                 foreach (var family in XwvmBridge.ExportableGames(data))
                 {
                     targets.AddRange(Edition.All.Where(e => e.Family == family).Select(e => new ConversionTarget(e.Name, e)));
+                    if (family == GameFamily.Tie)
+                    {
+                        targets.Add(ConversionTarget.Tftc);
+                    }
                 }
 
+                break;
+
+            case XwaPilotFormat when sourceVariant == TftcBridge.VariantId:
+                targets.AddRange(Edition.All.Where(e => e.Family == GameFamily.Tie).Select(e => new ConversionTarget(e.Name, e)));
+                targets.Add(new ConversionTarget("XWVM", null));
                 break;
         }
 
@@ -52,6 +70,11 @@ public static class PilotConverter
     public static string SuggestName(PilotFormat format, string pilotName, ConversionTarget target, byte[] data)
     {
         var name = format is XwvmPilotFormat ? XwvmBridge.PilotNameOf(data) : pilotName;
+        if (target.IsTftc)
+        {
+            return name;
+        }
+
         return target.Edition is { } edition ? edition.SuggestPilotName(name) : name;
     }
 
@@ -61,6 +84,11 @@ public static class PilotConverter
         if (target.Edition is { } edition)
         {
             return edition.CheckPilotName(name);
+        }
+
+        if (target.IsTftc)
+        {
+            return string.IsNullOrWhiteSpace(name) ? "Enter the name of the TFTC pilot to write into." : null;
         }
 
         if (string.IsNullOrWhiteSpace(name))
@@ -78,6 +106,41 @@ public static class PilotConverter
         if (nameError is not null)
         {
             throw new ArgumentException(nameError, nameof(name));
+        }
+
+        if (target.IsTftc)
+        {
+            var pilot = FindTftcPilot(folder, name)
+                        ?? throw new ArgumentException($"There is no TFTC pilot named \"{name}\" in this folder. Create the pilot in TFTC first, then convert into it.");
+            var existingPlt = File.ReadAllBytes(pilot);
+            var converted = format is XwvmPilotFormat ? TftcBridge.FromXwvm(data, existingPlt) : TftcBridge.FromTie(data, existingPlt);
+            return new ConversionPlan(converted, pilot, true,
+                $"The TIE Fighter career will be written into the TFTC pilot \"{name}\" ({System.IO.Path.GetFileName(pilot)}); a backup is kept.");
+        }
+
+        if (format is XwaPilotFormat)
+        {
+            if (target.IsXwvm)
+            {
+                var existingVm = FindXwvmPilot(folder, name);
+                var vmPath = existingVm ?? System.IO.Path.Combine(folder, XwvmBridge.VmpilotFileName(name));
+                if (existingVm is null && File.Exists(vmPath))
+                {
+                    throw new IOException($"{System.IO.Path.GetFileName(vmPath)} already exists in the XWVM folder but belongs to another pilot.");
+                }
+
+                var vm = TftcBridge.ToXwvm(data, existingVm is null ? null : File.ReadAllBytes(existingVm), name);
+                return new ConversionPlan(vm, vmPath, existingVm is not null, existingVm is null
+                    ? $"A new XWVM pilot \"{name}\" will be created with this TIE Fighter career."
+                    : $"XWVM already has a pilot named \"{name}\". Its TIE Fighter career will be replaced with this one; its other games stay as they are.");
+            }
+
+            var tie = target.Edition!;
+            var tieFile = ExistingFile(folder, name + tie.Extension) ?? System.IO.Path.Combine(folder, name.ToUpperInvariant() + tie.Extension);
+            var replaces = File.Exists(tieFile);
+            return new ConversionPlan(TftcBridge.ToTie(data, tie), tieFile, replaces, replaces
+                ? $"{System.IO.Path.GetFileName(tieFile)} already exists for the {tie.Name} and will be replaced (a backup is kept)."
+                : $"{System.IO.Path.GetFileName(tieFile)} will be created for the {tie.Name}.");
         }
 
         if (target.IsXwvm)
@@ -138,6 +201,38 @@ public static class PilotConverter
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or XmlException)
             {
                 // Not readable: XWVM skips such files too.
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>The TFTC pilot file in <paramref name="folder"/> whose stored name is <paramref name="name"/> (any case), if any.</summary>
+    public static string? FindTftcPilot(string folder, string name)
+    {
+        if (!Directory.Exists(folder))
+        {
+            return null;
+        }
+
+        foreach (var file in Directory.EnumerateFiles(folder, "*.plt").Order(StringComparer.OrdinalIgnoreCase))
+        {
+            try
+            {
+                if (new FileInfo(file).Length != XwaPilotFormat.RecordSize)
+                {
+                    continue;
+                }
+
+                var stored = PilotScanner.ReadName(file, File.ReadAllBytes(file), new XwaPilotFormat());
+                if (string.Equals(stored, name, StringComparison.OrdinalIgnoreCase))
+                {
+                    return file;
+                }
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                // Not readable: skip it.
             }
         }
 

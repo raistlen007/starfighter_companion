@@ -50,7 +50,7 @@ place, can be set in **Settings**, which lists every game and version with **Bro
 Settings are stored in your user settings folder (`%APPDATA%\StarfighterCompanion` on Windows,
 `~/.config/StarfighterCompanion` on Linux and macOS).
 
-### Converting between editions and XWVM
+### Converting between editions, XWVM and TFTC
 
 **Convert / export…** (top right of the editor, or the File menu) writes the open pilot as a new file for another
 version; the open file itself is not changed.
@@ -65,6 +65,12 @@ version; the open file itself is not changed.
 * **Out of XWVM.** The X-Wing or TIE Fighter career of an XWVM pilot is written as a pilot file for any edition.
   XWVM does not record which of two alternative missions was flown, so such scores go to the first one, and
   craft the old game has no slot for are left out (you are told how many).
+* **TIE Fighter ⇄ TIE Fighter Total Conversion Classic ⇄ XWVM.** TFTC Classic has TIE Fighter's battles and Combat
+  Chamber missions one for one, so battle progress, mission scores, Combat Chamber missions, kills by craft and weapon
+  statistics move across. TFTC has no place for TIE Fighter's rank, Secret Order, secret and bonus objectives or
+  training simulator levels. A TFTC pilot holds much more than TIE Fighter knows about, so a career is written *into
+  an existing TFTC pilot* (create it in TFTC first); its pilot training, rating, awards and the rest are kept. Open TFTC
+  pilots from the TFTC Classic version in the game menu to convert them.
 
 The new file goes into that version's folder from Settings (or one you pick), named after the pilot. The DOS editions
 allow 8 characters, the 1998 editions 16. If the file exists, it is replaced and backed up as usual.

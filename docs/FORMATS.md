@@ -117,6 +117,14 @@ Each format arranges its fields for display (`PilotDocument.BeginLayout`); the f
   Combat Chamber unlock bytes at 0xFF; TIE: version 1, training level 2) and fills it in. TIE files get two identical
   copies, X-Wing one. Every XWVM pilot written gets all four game records, because XWVM looks them up unchecked.
 
+* **TIE Fighter ⇄ TFTC Classic** goes through XWVM's TIE Fighter record (`TftcBridge`). Battles 1–13 and their missions
+  map to the `[Battle N: …]` sections of the built-in `tftc.lst` in order (TFTC Classic has the same mission counts),
+  the combat chamber craft to the `<craft> Training` sections of `tftc.combat.lst`, and TIE species *i* to XWA craft
+  type *i* + 1. Into TFTC: the campaign and Combat Chamber missions of those sections, and the campaign kill and weapon
+  statistics (career totals and the campaign-battles record), are replaced; everything else in the existing TFTC
+  pilot is kept. Out of TFTC: a mission counts as done when its completed count is set; kills are summed over the
+  three kinds of mission; the active battle is the last one started and not finished.
+
 ## Adding a format
 
 1. Describe the record with `LayoutBuilder` (skip every byte you do not want to expose).

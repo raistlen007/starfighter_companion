@@ -14,7 +14,7 @@ public class ConversionTests
 {
     // ---- helpers: build pilots through the editor, so offsets are checked against the schemas ----
 
-    private static byte[] Edit(byte[] data, string fileName, params (string Id, long Value)[] values)
+    internal static byte[] Edit(byte[] data, string fileName, params (string Id, long Value)[] values)
     {
         var doc = PilotFormats.Open(fileName, data);
         foreach (var (id, value) in values)
@@ -44,7 +44,7 @@ public class ConversionTests
         return r;
     }
 
-    private static byte[] TiePilot() => Edit(FormatTests.ValidTie(), "VADER.TFR",
+    internal static byte[] TiePilot() => Edit(FormatTests.ValidTie(), "VADER.TFR",
         ("rank", 4), ("difficulty", 2), ("score", 300000), ("avgScore", 6000), ("secretOrder", 3), ("secretCompletions", 7), ("secretScore", 45000),
         ("training.score[5]", 1234), ("training.maxLevel[5]", 6),
         ("combat.score[1][2]", 888), ("combat.complete[1][2]", 1),
