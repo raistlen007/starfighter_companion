@@ -15,7 +15,7 @@ public static class GameIcons
     {
         ["xwing98"] = new[] { "XWING95.EXE", "XWINGTIE.EXE", Path.Combine("XWINGCD", "XWING95.EXE") },
         ["tie98"] = new[] { "TIE95.EXE" },
-        ["xvt"] = new[] { "Z_XVT__.EXE" },
+        ["xvt"] = new[] { "XWINGTIE.EXE", "Z_XVT__.EXE" }, // the game program itself has no icon; its launcher has
         ["bop"] = new[] { "Z_XVT__.EXE" },
         ["xwa"] = new[] { "XWINGALLIANCE.EXE" },
         ["xwaup"] = new[] { "XWINGALLIANCE.EXE" },
@@ -71,6 +71,10 @@ public static class GameIcons
             ProgramFolders.Clear();
         }
     }
+
+    /// <summary>True when <paramref name="folder"/> holds the program of <paramref name="variantId"/>, or the version has no known program.</summary>
+    internal static bool HasProgramOrUnknown(string variantId, string folder) =>
+        !Programs.TryGetValue(variantId, out var programs) || programs.Any(p => Resolve(folder, p) is not null);
 
     /// <summary>Programs that are not the game itself and whose icon would be misleading.</summary>
     private static readonly string[] NotTheGame = { "unins", "setup", "install", "dosbox", "config", "launcher", "vcredist", "dxsetup", "dgvoodoo" };
