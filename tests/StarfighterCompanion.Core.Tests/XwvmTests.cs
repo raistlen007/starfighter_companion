@@ -64,8 +64,10 @@ public class XwvmTests
     {
         var doc = Open();
         var active = doc.Field("game[xwing].activeTour");
-        Assert.Equal(3, active.Choices!.Count); // none, tour1, tour2
-        Assert.NotNull(active.TrySetInteger(3));
+        Assert.Equal(6, active.Choices!.Count); // none + X-Wing's five tours
+        Assert.Null(active.TrySetInteger(3));   // tour3 is not started:
+        Assert.False(doc.CanSave(out var issues));
+        Assert.Contains(issues, i => i.Message.Contains("not started"));
         Assert.Null(active.TrySetInteger(0));
 
         var xml = XDocument.Parse(Encoding.UTF8.GetString(doc.Save()).TrimStart('﻿'));
@@ -99,5 +101,81 @@ public class XwvmTests
         var doc = Open();
         Assert.Null(doc.Field("name").TrySetText(""));
         Assert.False(doc.CanSave(out _));
+    }
+
+    [Fact]
+    public void Everything_xwvm_reads_is_listed_even_when_missing()
+    {
+        var doc = Open();
+
+        // X-Wing: all five tours with all their operations, historical groups, all four training craft, the Kalidor Crescent.
+        Assert.Equal(0, doc.Int("game[xwing].tour[tour5].started"));
+        Assert.True(doc.TryGetField("game[xwing].tour[tour5].op[19].score", out _));
+        Assert.True(doc.TryGetField("game[xwing].historic[bcombat].op[5].complete", out _));
+        Assert.True(doc.TryGetField("game[xwing].training[BWing].level", out _));
+        Assert.Equal(-1, doc.Int("game[xwing].award[kalidor]"));
+        Assert.True(doc.TryGetField("game[xwing].stat[SurfaceVictories]", out _));
+
+        // TIE Fighter: 13 battles with their missions, secret order, objective pins; xvt and xwa records are expected too.
+        Assert.True(doc.TryGetField("game[tf].tour[battle13].op[7].bonus", out _));
+        Assert.False(doc.TryGetField("game[tf].tour[battle13].op[8].bonus", out _));
+        Assert.True(doc.TryGetField("game[tf].award[secretOrderRank]", out _));
+        Assert.True(doc.TryGetField("game[tf].victory[TIEDefender].kills", out _));
+        Assert.True(doc.TryGetField("game[xwa].rank", out _));
+
+        // Unknown records already in the file are kept and shown.
+        Assert.Equal(5000, doc.Int("game[xwing].stat[LasersFired]"));
+    }
+
+    [Fact]
+    public void Records_are_created_only_when_a_value_is_set()
+    {
+        var doc = Open();
+        var untouched = Encoding.UTF8.GetString(doc.Save());
+
+        Assert.Null(doc.Field("game[xwing].tour[tour3].op[2].score").TrySetInteger(1234));
+        Assert.Null(doc.Field("game[tf].award[secretOrderRank]").TrySetInteger(2));
+        Assert.Null(doc.Field("game[xwing].training[YWing].level").TrySetInteger(8));
+        Assert.Null(doc.Field("game[xwa].difficulty").TrySetInteger(2));
+
+        var xml = XDocument.Parse(Encoding.UTF8.GetString(doc.Save()).TrimStart('\uFEFF')).Root!;
+        var xwing = xml.Elements("PilotGameRecord").Single(e => (string?)e.Attribute("Id") == "xwing");
+        var tour3 = xwing.Elements("PilotTourRecord").Single(t => (string?)t.Attribute("TourId") == "tour3");
+        Assert.Equal("0", (string?)tour3.Attribute("CurrentTourStep")); // XWVM requires it
+        Assert.Equal("1234", (string?)tour3.Elements("PilotOperationRecord").Single().Attribute("Score"));
+        Assert.Equal("8", (string?)xwing.Elements("TrainingRecord").Single(t => (string?)t.Attribute("CraftType") == "YWing").Attribute("HighestLevelCompleted"));
+        Assert.Equal("2", (string?)xml.Elements("PilotGameRecord").Single(e => (string?)e.Attribute("Id") == "tf")
+            .Elements("PilotAwardRecord").Single(a => (string?)a.Attribute("Award") == "secretOrderRank").Attribute("Level"));
+
+        // A new game record carries every attribute XWVM writes, and sits in XWVM's game order.
+        Assert.Equal(new[] { "xwing", "tf", "xwa" }, xml.Elements("PilotGameRecord").Select(e => (string?)e.Attribute("Id")));
+        var xwa = xml.Elements("PilotGameRecord").Last();
+        Assert.Equal("Hard", (string?)xwa.Attribute("Difficulty"));
+        Assert.Equal("-1", (string?)xwa.Attribute("AvatarIndex"));
+
+        // Nothing else was added; the untouched save was the file as it was.
+        Assert.DoesNotContain("tour5", untouched);
+        Assert.Equal(1, xwing.Elements("PilotTourRecord").Count(t => (string?)t.Attribute("TourId") == "tour3"));
+    }
+
+    [Fact]
+    public void Awards_and_started_flags_remove_their_records()
+    {
+        var doc = Open();
+        Assert.Null(doc.Field("game[xwing].tour[tour1].started").TrySetInteger(0));
+        Assert.Null(doc.Field("game[xwing].award[kalidor]").TrySetInteger(3));
+        Assert.Null(doc.Field("game[xwing].award[kalidor]").TrySetInteger(-1));
+
+        var xwing = XDocument.Parse(Encoding.UTF8.GetString(doc.Save()).TrimStart('\uFEFF')).Root!.Element("PilotGameRecord")!;
+        Assert.DoesNotContain(xwing.Elements("PilotTourRecord"), t => (string?)t.Attribute("TourId") == "tour1");
+        Assert.DoesNotContain(xwing.Elements("PilotAwardRecord"), a => (string?)a.Attribute("Award") == "kalidor");
+    }
+
+    [Fact]
+    public void A_step_beyond_the_last_operation_cannot_be_saved()
+    {
+        var doc = Open();
+        Assert.NotNull(doc.Field("game[xwing].tour[tour2].step").TrySetInteger(12)); // tour 2 has 12 operations (0-11)
+        Assert.Null(doc.Field("game[xwing].tour[tour2].step").TrySetInteger(11));
     }
 }
