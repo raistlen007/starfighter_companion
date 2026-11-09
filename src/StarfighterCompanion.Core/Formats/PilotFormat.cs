@@ -21,6 +21,9 @@ public abstract class PilotFormat
 
     public abstract PilotDocument Open(string fileName, byte[] data);
 
+    /// <summary>Allows edition-specific display metadata without changing the binary format.</summary>
+    public virtual PilotDocument Open(string fileName, byte[] data, string? variantId) => Open(fileName, data);
+
     protected static bool HasExtension(string fileName, IReadOnlyList<string> extensions) =>
         extensions.Contains(Path.GetExtension(fileName).ToLowerInvariant());
 }
@@ -65,7 +68,7 @@ public static class PilotFormats
     }
 
     /// <summary>Opens a pilot file. Throws <see cref="UnsupportedPilotFileException"/> with a helpful message if it is not recognised.</summary>
-    public static PilotDocument Open(string fileName, byte[] data)
+    public static PilotDocument Open(string fileName, byte[] data, string? variantId = null)
     {
         var format = Detect(fileName, data);
         if (format is null)
@@ -80,7 +83,7 @@ public static class PilotFormats
             throw new UnsupportedPilotFileException(message);
         }
 
-        return format.Open(fileName, data);
+        return format.Open(fileName, data, variantId);
     }
 
     public static PilotDocument Open(string path) => Open(path, File.ReadAllBytes(path));

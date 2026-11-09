@@ -39,7 +39,7 @@ always written back unchanged.
 ## X-Wing Alliance (XWAUP, TFTC) — `.plt`
 
 * Source: OpenXWA `PilotData` in `src/xwa/frontend/mission_setup.h`.
-* Record: **152,076 bytes**. Statistics cover 512 craft types (listed by number, since XWAUP and TFTC change the craft list).
+* Record: **152,076 bytes**. Statistics cover 512 craft types. Original XWA/OpenXWA labels are bundled from OpenXWA's documented craft-type list; hidden, unused and unmapped IDs remain numeric. XWAUP/TFTC labels remain numeric until their separate mappings are verified. No game installation is required.
 * Values: rating 0–24 (the per-rating mission table has 25 entries), rank 0–8, Kalidor Crescent 0–6, mission skips 0–3.
 
 ## XWVM — `.vmpilot`

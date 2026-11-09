@@ -35,6 +35,44 @@ public class FormatTests
     }
 
     [Fact]
+    public void Tie_training_and_combat_slots_use_confirmed_ship_names()
+    {
+        var fields = TiePilotFormat.Schema.Fields.ToDictionary(f => f.Id);
+        Assert.Equal("TIE Fighter (Craft 1) current level", fields["training.level[0]"].Label);
+        Assert.Equal("Assault Gunboat (Craft 5) high score", fields["training.score[4]"].Label);
+        Assert.Equal("TIE Defender (Craft 6) highest level reached", fields["training.maxLevel[5]"].Label);
+        Assert.Equal("Missile Boat (Craft 7) current level", fields["training.level[6]"].Label);
+        Assert.Equal("Combat chamber/Missile Boat (Craft 7)", fields["combat.score[6][0]"].Group);
+        Assert.Equal("Combat chamber/Assault Gunboat (Craft 5)", fields["combat.complete[4][0]"].Group);
+        Assert.Equal("Craft 8 current level", fields["training.level[7]"].Label);
+        Assert.Equal("Combat chamber/Craft 12", fields["combat.score[11][0]"].Group);
+    }
+
+    [Fact]
+    public void Xwa_original_names_are_bundled_and_unmapped_ids_stay_numeric()
+    {
+        var fields = XwaPilotFormat.Schema.Fields.ToDictionary(f => f.Id);
+        Assert.Equal("X-wing (craft type 1) unlocked", fields["craftKnown[1]"].Label);
+        Assert.Equal("YT-2000 (craft type 110)", fields["main.killsByCraft[0][110]"].Label);
+        Assert.Equal("TIE Fighter (craft type 5)", fields["main.sharedKillsByCraft[1][5]"].Label);
+        Assert.Equal("Craft type 184 unlocked", fields["craftKnown[184]"].Label);
+        Assert.Equal("Craft type 511", fields["main.assistsByCraft[2][511]"].Label);
+    }
+
+    [Theory]
+    [InlineData("xwa", "X-wing (craft type 1) unlocked")]
+    [InlineData("openxwa", "X-wing (craft type 1) unlocked")]
+    [InlineData("xwaup", "Craft type 1 unlocked")]
+    [InlineData("tftc", "Craft type 1 unlocked")]
+    public void Xwa_variant_determines_only_display_labels(string variantId, string expected)
+    {
+        var data = new byte[XwaPilotFormat.RecordSize];
+        var document = PilotFormats.Open("Ace0.plt", data, variantId);
+        Assert.Equal(expected, document.Field("craftKnown[1]").Label);
+        Assert.Equal(data, document.Save());
+    }
+
+    [Fact]
     public void Fields_never_overlap()
     {
         var schemas = new[]

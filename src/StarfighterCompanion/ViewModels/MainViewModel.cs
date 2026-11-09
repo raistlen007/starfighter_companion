@@ -181,7 +181,7 @@ public sealed partial class MainViewModel : ViewModelBase
         try
         {
             var data = File.ReadAllBytes(path);
-            var document = PilotFormats.Open(path, data);
+            var document = PilotFormats.Open(path, data, variantId);
             var format = PilotFormats.Detect(path, data)!;
             document.Edition = Edition.For(variantId, format);
             _format = format;

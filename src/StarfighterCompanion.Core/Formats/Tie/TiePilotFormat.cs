@@ -33,6 +33,17 @@ public sealed class TiePilotFormat : PilotFormat
     public override PilotDocument Open(string fileName, byte[] data) =>
         new TiePilotDocument(this, fileName, data, data.Length / RecordSize);
 
+    // Training/Combat Chamber ship slots, not the 69-species kill-statistics index.
+    // OpenTIE shipext_Find_Mission_Ship confirms slots 1-7; 8-12 remain unknown.
+    private static readonly string[] TrainingShips =
+    {
+        "TIE Fighter", "TIE Interceptor", "TIE Bomber", "TIE Advanced",
+        "Assault Gunboat", "TIE Defender", "Missile Boat",
+    };
+
+    private static string TrainingShip(int i) =>
+        i < TrainingShips.Length ? $"{TrainingShips[i]} (Craft {i + 1})" : $"Craft {i + 1}";
+
     internal static readonly string[] Ranks = { "Cadet", "Officer", "Lieutenant", "Captain", "Commander", "General" };
 
     // Spec table order, from OpenTIE src/tie_runtime/flight_assets/species_names.c.
@@ -81,10 +92,10 @@ public sealed class TiePilotFormat : PilotFormat
 
         using (b.Group("Training simulator"))
         {
-            b.Array("training.level", BinaryKind.UInt8, ShipCount, i => $"Craft {i + 1} current level", FieldOptions.Range(0, 255));
+            b.Array("training.level", BinaryKind.UInt8, ShipCount, i => $"{TrainingShip(i)} current level", FieldOptions.Range(0, 255));
             b.Skip(1);
-            b.Array("training.score", BinaryKind.Int32, ShipCount, i => $"Craft {i + 1} high score", positive);
-            b.Array("training.maxLevel", BinaryKind.UInt8, ShipCount, i => $"Craft {i + 1} highest level reached", FieldOptions.Range(0, 255));
+            b.Array("training.score", BinaryKind.Int32, ShipCount, i => $"{TrainingShip(i)} high score", positive);
+            b.Array("training.maxLevel", BinaryKind.UInt8, ShipCount, i => $"{TrainingShip(i)} highest level reached", FieldOptions.Range(0, 255));
         }
 
         b.Expect(0x66, "combat chamber");
@@ -97,7 +108,7 @@ public sealed class TiePilotFormat : PilotFormat
             for (var s = 0; s < ShipCount; s++)
             {
                 var ship = s;
-                using (b.Group($"Craft {ship + 1}"))
+                using (b.Group(TrainingShip(ship)))
                 {
                     b.Array($"combat.score[{ship}]", BinaryKind.Int32, 8, i => $"Course {i + 1} high score", positive);
                 }
@@ -106,7 +117,7 @@ public sealed class TiePilotFormat : PilotFormat
             for (var s = 0; s < ShipCount; s++)
             {
                 var ship = s;
-                using (b.Group($"Craft {ship + 1}"))
+                using (b.Group(TrainingShip(ship)))
                 {
                     b.Array($"combat.complete[{ship}]", BinaryKind.UInt8, 8, i => $"Course {i + 1} completed", FieldOptions.AsFlag);
                 }
@@ -222,7 +233,7 @@ internal sealed class TiePilotDocument : BinaryPilotDocument
             if (Int($"training.level[{t}]") > Int($"training.maxLevel[{t}]") + 1)
             {
                 yield return CommonRules.Odd(
-                    $"Training craft {t + 1}: current level is beyond the highest level reached.", Field($"training.level[{t}]"));
+                    $"{TrainingShip(t)}: current level is beyond the highest level reached.", Field($"training.level[{t}]"));
             }
         }
 
