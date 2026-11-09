@@ -42,9 +42,14 @@ jobs:
       - name: Publish
         shell: bash
         run: |
-          version="${GITHUB_REF_NAME#v}"
-          [[ "$GITHUB_REF_TYPE" == "tag" ]] || version="0.0.0-ci"
-          dotnet publish src/StarfighterCompanion -c Release -r ${{ matrix.rid }} -o publish -p:Version="${version%%-*}"
+          # The version comes from <Version> in the project; a release tag (v1.2.0 or V1.2.0) overrides it.
+          version=$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' src/StarfighterCompanion/StarfighterCompanion.csproj)
+          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
+            version="${GITHUB_REF_NAME#[vV]}"
+            version="${version%%-*}"
+          fi
+          echo "APP_VERSION=$version" >> "$GITHUB_ENV"
+          dotnet publish src/StarfighterCompanion -c Release -r ${{ matrix.rid }} -o publish -p:Version="$version"
 
       - name: Package (Windows / Linux)
         if: ${{ !startsWith(matrix.rid, 'osx') }}
@@ -75,7 +80,7 @@ jobs:
             <key>CFBundleIdentifier</key><string>io.github.starfighter-companion</string>
             <key>CFBundleExecutable</key><string>StarfighterCompanion</string>
             <key>CFBundlePackageType</key><string>APPL</string>
-            <key>CFBundleShortVersionString</key><string>${GITHUB_REF_NAME#v}</string>
+            <key>CFBundleShortVersionString</key><string>${APP_VERSION}</string>
             <key>NSHighResolutionCapable</key><true/>
           </dict></plist>
           EOF
