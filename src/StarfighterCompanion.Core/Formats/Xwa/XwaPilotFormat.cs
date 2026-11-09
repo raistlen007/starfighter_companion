@@ -15,7 +15,10 @@ public sealed class XwaPilotFormat : PilotFormat
     public const int CraftTypes = 512;
     public const int FlightGroups = 192;
 
-    private static readonly Lazy<RecordSchema> SchemaInstance = new(BuildSchema);
+    private static readonly Lazy<RecordSchema> SchemaInstance =
+        new(() => BuildSchema(OriginalXwaCraftNames.Label));
+    private static readonly Lazy<RecordSchema> GenericSchemaInstance =
+        new(() => BuildSchema(i => $"Craft type {i}"));
 
     public override string Game => "Star Wars: X-Wing Alliance";
 
@@ -30,11 +33,16 @@ public sealed class XwaPilotFormat : PilotFormat
     public override bool Matches(string fileName, ReadOnlySpan<byte> data) =>
         HasExtension(fileName, Extensions) && data.Length == RecordSize;
 
-    public override PilotDocument Open(string fileName, byte[] data) => new XwaPilotDocument(this, data);
+    public override PilotDocument Open(string fileName, byte[] data) => Open(fileName, data, null);
 
-    internal static string Craft(int i) => $"Craft type {i}";
+    public override PilotDocument Open(string fileName, byte[] data, string? variantId)
+    {
+        // Original XWA IDs may be repurposed by XWAU/TFTC; do not guess their names.
+        var original = variantId is null or "xwa" or "openxwa";
+        return new XwaPilotDocument(this, data, original ? Schema : GenericSchemaInstance.Value, original);
+    }
 
-    private static RecordSchema BuildSchema()
+    private static RecordSchema BuildSchema(Func<int, string> craft)
     {
         var b = new LayoutBuilder();
         var positive = FieldOptions.NonNegative;
@@ -60,7 +68,7 @@ public sealed class XwaPilotFormat : PilotFormat
 
         using (b.Scope("main", "Career statistics"))
         {
-            Stats(b);
+            Stats(b, craft);
         }
 
         XvtCommon.LastMission(b, FlightGroups);
@@ -72,7 +80,7 @@ public sealed class XwaPilotFormat : PilotFormat
 
         using (b.Group("Tech library"))
         {
-            b.Array("craftKnown", BinaryKind.UInt8, CraftTypes, i => $"{Craft(i)} unlocked", FieldOptions.AsFlag);
+            b.Array("craftKnown", BinaryKind.UInt8, CraftTypes, i => $"{craft(i)} unlocked", FieldOptions.AsFlag);
         }
 
         b.Skip(4); // "new craft added to tech room" announcement
@@ -121,7 +129,7 @@ public sealed class XwaPilotFormat : PilotFormat
 
             using (b.Scope("stats", "Statistics"))
             {
-                Stats(b);
+                Stats(b, craft);
             }
         });
 
@@ -139,7 +147,7 @@ public sealed class XwaPilotFormat : PilotFormat
         return b.Build(RecordSize);
     }
 
-    private static void Stats(LayoutBuilder b)
+    private static void Stats(LayoutBuilder b, Func<int, string> craft)
     {
         var types = XvtCommon.MissionTypes;
         void PerType(string id, string label, FieldOptions o)
@@ -167,9 +175,9 @@ public sealed class XwaPilotFormat : PilotFormat
         PerType("played", "Missions played", FieldOptions.NonNegative);
         PerType("kills", "Kills", FieldOptions.NonNegative);
         PerType("friendlyKills", "Friendly craft killed", FieldOptions.NonNegative);
-        PerTypeArray("killsByCraft", "Kills by craft", CraftTypes, Craft);
-        PerTypeArray("sharedKillsByCraft", "Shared kills by craft", CraftTypes, Craft);
-        PerTypeArray("assistsByCraft", "Assists by craft", CraftTypes, Craft);
+        PerTypeArray("killsByCraft", "Kills by craft", CraftTypes, craft);
+        PerTypeArray("sharedKillsByCraft", "Shared kills by craft", CraftTypes, craft);
+        PerTypeArray("assistsByCraft", "Assists by craft", CraftTypes, craft);
         PerTypeArray("killsOnPlayerRating", "Kills on players by rating", 25, i => $"Rating {i}");
         PerTypeArray("sharedKillsOnPlayerRating", "Shared kills on players by rating", 25, i => $"Rating {i}");
         PerTypeArray("assistsOnPlayerRating", "Assists on players by rating", 25, i => $"Rating {i}");
@@ -218,11 +226,13 @@ internal sealed class XwaPilotDocument : BinaryPilotDocument
 {
     private readonly XwaPilotFormat _format;
 
-    public XwaPilotDocument(XwaPilotFormat format, byte[] data)
-        : base(data, XwaPilotFormat.Schema, 1)
+    public XwaPilotDocument(XwaPilotFormat format, byte[] data, RecordSchema schema, bool originalNames)
+        : base(data, schema, 1)
     {
         _format = format;
-        Notes.Add("Craft types are listed by number because their names depend on the craft list of your installation (XWAUP and TFTC change it).");
+        Notes.Add(originalNames
+            ? "Craft names use the original X-Wing Alliance ship list; modded installations may use different names."
+            : "Craft types are listed by ID until this edition's (XWAU/TFTC) craft mappings are verified.");
     }
 
     public override string GameName => _format.Game;
