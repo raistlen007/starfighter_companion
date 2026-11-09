@@ -51,6 +51,22 @@ always written back unchanged.
 * Rules: the active tour must have a tour record (XWVM fails to load the pilot otherwise); a tour's
   `CurrentTourStep` of 2147483647 means completed.
 
+## Navigation tree
+
+Each format arranges its fields for display (`PilotDocument.BeginLayout`); the file layout is not affected.
+
+* Progression of the whole career sits at the top level; progression between tours (current tour, current battle)
+  at the root of the tours; a tour's own progress (status, operations/missions completed) at the root of that tour.
+* A mission with several saved values is its own sub-tree; a mission with a single value (X-Wing's tour scores)
+  is listed at the tour's root. Missions, tournaments, battles and campaigns of XvT/BoP/XWA are sub-trees too.
+* Slots that exist in the file but not in the game (X-Wing tours 6-8, TIE battles 14-20, unused mission slots and
+  craft slots) are hidden while empty, and shown under "(not in the game)" / "Unused slot" when they hold data.
+  Hidden fields are still validated and saved byte for byte.
+* TIE Fighter's secret and bonus objective bytes are shown as one yes/no value per mission.
+* X-Wing Alliance (and XWAUP, TFTC) build the Campaign and Combat chamber trees from the installation's
+  `MISSIONS\MISSION.LST` and `COMBAT\MISSION.LST` (found next to the pilot or up to two folders above), read the way
+  the game reads them (OpenXWA `MissionSetup_LoadMissionList`). Without them, missions are listed by number.
+
 ## Converting
 
 `src/StarfighterCompanion.Core/Conversion`.

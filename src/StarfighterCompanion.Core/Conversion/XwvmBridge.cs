@@ -49,18 +49,8 @@ public static class XwvmBridge
 
     private const string KalidorAward = "kalidor";
 
-    /// <summary>
-    /// Mission choices of every operation (OpenXW shipext.c g_tourNOperations; the same as XWVM's todStages.json).
-    /// 0xFF = no alternative.
-    /// </summary>
-    internal static readonly (byte A, byte B)[][] XWingOperations =
-    {
-        Linear(12),
-        Linear(12),
-        Linear(14),
-        new (byte, byte)[] { (0, 255), (1, 255), (2, 255), (3, 255), (4, 255), (5, 6), (7, 255), (8, 9), (10, 255), (11, 255), (12, 255), (13, 14), (15, 255), (16, 255), (17, 255), (18, 19), (20, 255), (21, 255), (22, 255), (23, 255) },
-        new (byte, byte)[] { (0, 255), (1, 255), (2, 255), (3, 255), (4, 255), (5, 255), (6, 255), (7, 255), (8, 255), (9, 255), (10, 11), (12, 255), (13, 255), (14, 15), (16, 255), (17, 255), (18, 19), (20, 255), (21, 255), (22, 23) },
-    };
+    /// <summary>Mission choices of every operation (see <see cref="XWingPilotFormat.Operations"/>).</summary>
+    internal static (byte A, byte B)[][] XWingOperations => XWingPilotFormat.Operations;
 
     // ---- TIE Fighter -----------------------------------------------------------------------------------------------
 
@@ -869,8 +859,6 @@ public static class XwvmBridge
         new("StatRecord", new XAttribute("Id", id), new XAttribute("Value", value));
 
     // ---- small helpers ----
-
-    private static (byte, byte)[] Linear(int count) => Enumerable.Range(0, count).Select(i => ((byte)i, (byte)255)).ToArray();
 
     private static Dictionary<string, int> Stats(XElement game)
     {

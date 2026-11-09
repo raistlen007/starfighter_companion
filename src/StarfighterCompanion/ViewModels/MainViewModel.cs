@@ -398,7 +398,7 @@ public sealed partial class MainViewModel : ViewModelBase
         }
 
         Groups.Clear();
-        foreach (var group in GroupNode.Build(document.Fields))
+        foreach (var group in GroupNode.Build(document.DisplayFields))
         {
             Groups.Add(group);
         }
@@ -444,7 +444,7 @@ public sealed partial class MainViewModel : ViewModelBase
             if (_searchText.Length > 0)
             {
                 var terms = _searchText.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                foreach (var field in _document.Fields
+                foreach (var field in _document.DisplayFields
                              .Where(f => terms.All(t => f.Label.Contains(t, StringComparison.OrdinalIgnoreCase) ||
                                                         f.Group.Contains(t, StringComparison.OrdinalIgnoreCase)))
                              .Take(MaxSearchResults))

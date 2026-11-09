@@ -267,7 +267,17 @@ internal sealed class XvtPilotDocument : BinaryPilotDocument
         Notes.Add(isBop
             ? "Balance of Power keeps an X-Wing vs. TIE Fighter copy of this pilot in a .plt file with the same name. Edit both if you play both games."
             : "If you also own Balance of Power, it keeps its own copy of this pilot in a .pl2 file with the same name.");
+
+        // Missions, tournaments, battles and campaigns each keep several values: one sub-tree each.
+        BeginLayout().ShowRestSplitting(f => RecordLists.Any(r => f.Id.Contains(r, StringComparison.Ordinal)));
     }
+
+    private static readonly string[] RecordLists =
+    {
+        ".spTraining[", ".spMelee[", ".spCombat[", ".mpTraining[", ".mpMelee[", ".mpCombat[",
+        ".spTournament[", ".mpTournament[", ".spBattle[", ".mpBattle[",
+        ".spCampaign[", ".mpCampaign[", ".spCampaignMission[", ".mpCampaignMission[",
+    };
 
     public override string GameName => _format.Game;
 

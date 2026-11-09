@@ -65,6 +65,22 @@ public sealed class XWingPilotFormat : PilotFormat
         "Mine (type 3)", "Mine (type 4)", "Satellite", "Nav Buoy", "Probe",
     };
 
+    /// <summary>
+    /// Mission choices of every operation of tours 1-5 (OpenXW shipext.c g_tourNOperations; identical to XWVM's
+    /// todStages.json). Each operation offers mission A, and sometimes an alternative mission B (255 = none).
+    /// The pilot file keeps one score per mission, indexed by mission.
+    /// </summary>
+    internal static readonly (byte A, byte B)[][] Operations =
+    {
+        Linear(12),
+        Linear(12),
+        Linear(14),
+        new (byte, byte)[] { (0, 255), (1, 255), (2, 255), (3, 255), (4, 255), (5, 6), (7, 255), (8, 9), (10, 255), (11, 255), (12, 255), (13, 14), (15, 255), (16, 255), (17, 255), (18, 19), (20, 255), (21, 255), (22, 255), (23, 255) },
+        new (byte, byte)[] { (0, 255), (1, 255), (2, 255), (3, 255), (4, 255), (5, 255), (6, 255), (7, 255), (8, 255), (9, 255), (10, 11), (12, 255), (13, 255), (14, 15), (16, 255), (17, 255), (18, 19), (20, 255), (21, 255), (22, 23) },
+    };
+
+    private static (byte, byte)[] Linear(int count) => Enumerable.Range(0, count).Select(i => ((byte)i, (byte)255)).ToArray();
+
     /// <summary>Operations per tour (OpenXW shipext.h); tours 6-8 have none.</summary>
     internal static readonly int[] TourOperationCounts = { 12, 12, 14, 20, 20, 0, 0, 0 };
 
@@ -234,6 +250,89 @@ internal sealed class XWingPilotDocument : BinaryPilotDocument
         _format = format;
         PilotName = Path.GetFileNameWithoutExtension(fileName);
         Notes.Add("X-Wing stores the pilot's name as the file name, so it cannot be changed here.");
+        Arrange();
+    }
+
+    private void Arrange()
+    {
+        var layout = BeginLayout();
+        layout.ShowAsIs("status").ShowAsIs("rank").ShowAsIs("score").ShowAsIs("skill").ShowAsIs("medal.");
+
+        for (var c = 0; c < 4; c++)
+        {
+            var craft = XWingPilotFormat.Ships[c];
+            layout.Show($"training.bestScore[{c}]", $"Proving grounds/{craft}", "Best score")
+                  .Show($"training.level[{c}]", $"Proving grounds/{craft}", "Highest level completed");
+        }
+
+        // Historical missions: six per craft (and six bonus missions), each with a score and a battle patch.
+        for (var c = 0; c < 4; c++)
+        {
+            var craft = XWingPilotFormat.Ships[c];
+            for (var m = 0; m < 16; m++)
+            {
+                if (m >= 6 && layout.AllZero(new[] { $"historic.score[{c}][{m}]" }))
+                {
+                    continue; // no such mission
+                }
+
+                var group = $"Historical missions/{craft}/Mission {m + 1}";
+                layout.Show($"historic.score[{c}][{m}]", group, "Best score")
+                      .Show($"historic.patch[{c}][{m}]", group, "Completed (battle patch)");
+            }
+        }
+
+        for (var m = 0; m < 6; m++)
+        {
+            var group = $"Historical missions/Bonus/Mission {m + 1}";
+            layout.Show($"historic.bonusScore[{m}]", group, "Best score")
+                  .Show($"historic.bonusCompleted[{m}]", group, "Completed");
+        }
+
+        // Tours of Duty: which tour is being flown at the root; each tour's progress and mission scores in the tour.
+        layout.Show("tour.current", "Tours of Duty").Show("tour.currentOperation", "Tours of Duty");
+        for (var t = 0; t < 8; t++)
+        {
+            var real = t < XWingPilotFormat.Operations.Length;
+            var scoreIds = Enumerable.Range(0, 25).Select(m => $"tour.score[{t}][{m}]").ToList();
+            if (!real && layout.AllZero(scoreIds.Append($"tour.status[{t}]").Append($"tour.progress[{t}]")))
+            {
+                continue; // tours 6-8 do not exist
+            }
+
+            var group = real ? $"Tours of Duty/{XWingPilotFormat.TourNames[t]}" : $"Tours of Duty/Tour {t + 1} (not in the game)";
+            layout.Show($"tour.status[{t}]", group, "Status")
+                  .Show($"tour.progress[{t}]", group, "Operations completed");
+
+            var labels = new Dictionary<int, string>();
+            if (real)
+            {
+                var operations = XWingPilotFormat.Operations[t];
+                for (var k = 0; k < operations.Length; k++)
+                {
+                    var (a, b) = operations[k];
+                    labels[a] = b == 255 ? $"Operation {k + 1} score" : $"Operation {k + 1} score (mission A)";
+                    if (b != 255)
+                    {
+                        labels[b] = $"Operation {k + 1} score (mission B)";
+                    }
+                }
+            }
+
+            for (var m = 0; m < 25; m++)
+            {
+                if (labels.TryGetValue(m, out var label))
+                {
+                    layout.Show($"tour.score[{t}][{m}]", group, label);
+                }
+                else if (!layout.AllZero(new[] { $"tour.score[{t}][{m}]" }))
+                {
+                    layout.Show($"tour.score[{t}][{m}]", group, $"Unused slot {m + 1} score");
+                }
+            }
+        }
+
+        layout.ShowAsIs("stats.");
     }
 
     public override string GameName => _format.Game;

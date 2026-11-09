@@ -39,7 +39,8 @@ public sealed class XwaPilotFormat : PilotFormat
     {
         // Original XWA IDs may be repurposed by XWAU/TFTC; do not guess their names.
         var original = variantId is null or "xwa" or "openxwa";
-        return new XwaPilotDocument(this, data, original ? Schema : GenericSchemaInstance.Value, original);
+        return new XwaPilotDocument(this, data, original ? Schema : GenericSchemaInstance.Value, original,
+            XwaMissionList.Find(fileName, "MISSIONS"), XwaMissionList.Find(fileName, "COMBAT"));
     }
 
     private static RecordSchema BuildSchema(Func<int, string> craft)
@@ -226,14 +227,103 @@ internal sealed class XwaPilotDocument : BinaryPilotDocument
 {
     private readonly XwaPilotFormat _format;
 
-    public XwaPilotDocument(XwaPilotFormat format, byte[] data, RecordSchema schema, bool originalNames)
+    public XwaPilotDocument(XwaPilotFormat format, byte[] data, RecordSchema schema, bool originalNames,
+        IReadOnlyList<XwaMissionListEntry>? campaign = null, IReadOnlyList<XwaMissionListEntry>? combat = null)
         : base(data, schema, 1)
     {
         _format = format;
         Notes.Add(originalNames
             ? "Craft names use the original X-Wing Alliance ship list; modded installations may use different names."
             : "Craft types are listed by ID until this edition's (XWAU/TFTC) craft mappings are verified.");
+        if (campaign is null)
+        {
+            Notes.Add("Campaign missions are listed by number: the installation's MISSIONS\\MISSION.LST was not found next to the pilot.");
+        }
+
+        Arrange(campaign, combat);
     }
+
+    private static readonly string[] RecordFields =
+        { "flown", "completed", "failed", "first", "second", "third", "bestScore", "bestTime", "bestPlacement", "award", "bestBonus" };
+
+    private static readonly Dictionary<string, string> RecordLabels = new()
+    {
+        ["flown"] = "Times flown", ["first"] = "1st places", ["second"] = "2nd places", ["third"] = "3rd places",
+        ["completed"] = "Times completed", ["failed"] = "Times failed", ["bestScore"] = "Best score", ["bestTime"] = "Best time",
+        ["bestPlacement"] = "Best placement", ["award"] = "Award", ["bestBonus"] = "Best bonus",
+    };
+
+    private void Arrange(IReadOnlyList<XwaMissionListEntry>? campaign, IReadOnlyList<XwaMissionListEntry>? combat)
+    {
+        var layout = BeginLayout();
+
+        // Career progression first.
+        foreach (var field in Fields.Where(f => !f.Id.StartsWith("tod[", StringComparison.Ordinal) &&
+                                                !f.Id.StartsWith("combat[", StringComparison.Ordinal) &&
+                                                !f.Id.StartsWith("faction[", StringComparison.Ordinal) &&
+                                                !f.Id.StartsWith("craftKnown[", StringComparison.Ordinal) &&
+                                                f.Id != "skipsRemaining"))
+        {
+            layout.Show(field, field.Group);
+        }
+
+        // Campaign: progression (mission skips) at the root, then one sub-tree per battle and per mission.
+        layout.Show("skipsRemaining", "Campaign");
+        Missions(layout, "tod", "Campaign", campaign);
+        Missions(layout, "combat", "Combat chamber", combat);
+
+        layout.ShowAsIs("craftKnown[").ShowAsIs("faction[");
+    }
+
+    private void Missions(DisplayLayout layout, string prefix, string root, IReadOnlyList<XwaMissionListEntry>? list)
+    {
+        void ShowMission(int index, string group)
+        {
+            foreach (var name in RecordFields)
+            {
+                layout.Show($"{prefix}[{index}].{name}", group, RecordLabels[name]);
+            }
+        }
+
+        bool Empty(int index) => layout.AllZero(RecordFields.Select(n => $"{prefix}[{index}].{n}"));
+
+        if (list is null)
+        {
+            for (var i = 0; i < 255; i++)
+            {
+                ShowMission(i, $"{root}/Mission {i}");
+            }
+
+            return;
+        }
+
+        var listed = new HashSet<int>();
+        var sections = new Dictionary<string, int>();
+        foreach (var entry in list)
+        {
+            if (!listed.Add(entry.MissionIndex))
+            {
+                continue; // a mission listed twice keeps its first place
+            }
+
+            var section = string.IsNullOrWhiteSpace(entry.Section) ? "Missions" : Clean(entry.Section);
+            var title = Clean(entry.Title.Length > 0 && !entry.Title.StartsWith('!') ? entry.Title : Path.GetFileNameWithoutExtension(entry.FileName));
+            sections[section] = sections.GetValueOrDefault(section) + 1;
+            ShowMission(entry.MissionIndex, $"{root}/{section}/{sections[section]}. {title}");
+        }
+
+        // Slots the list does not mention are shown only when they hold data.
+        for (var i = 0; i < 255; i++)
+        {
+            if (!listed.Contains(i) && !Empty(i))
+            {
+                ShowMission(i, $"{root}/Not in the mission list/Mission {i}");
+            }
+        }
+    }
+
+    /// <summary>Group names use "/" as the separator.</summary>
+    private static string Clean(string text) => text.Replace('/', '-').Trim();
 
     public override string GameName => _format.Game;
 
