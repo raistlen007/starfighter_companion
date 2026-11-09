@@ -63,9 +63,10 @@ Each format arranges its fields for display (`PilotDocument.BeginLayout`); the f
   craft slots) are hidden while empty, and shown under "(not in the game)" / "Unused slot" when they hold data.
   Hidden fields are still validated and saved byte for byte.
 * TIE Fighter's secret and bonus objective bytes are shown as one yes/no value per mission.
-* X-Wing Alliance (and XWAUP, TFTC) build the Campaign and Combat chamber trees from the installation's
-  `MISSIONS\MISSION.LST` and `COMBAT\MISSION.LST` (found next to the pilot or up to two folders above), read the way
-  the game reads them (OpenXWA `MissionSetup_LoadMissionList`). Without them, missions are listed by number.
+* X-Wing Alliance (and XWAUP, TFTC) group Campaign and Combat chamber missions by battle using mission lists built
+  into the program (`src/StarfighterCompanion.Core/Data/MissionLists`, in the game's `MISSION.LST` format, read the
+  way OpenXWA's `MissionSetup_LoadMissionList` reads it). Starfighter Companion never reads game files; without a
+  built-in list for the edition, missions are listed by their number in the pilot file.
 
 ## Converting
 

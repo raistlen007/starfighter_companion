@@ -61,21 +61,29 @@ public class LayoutTests
     }
 
     [Fact]
-    public void Xwa_campaigns_come_from_the_installations_mission_list()
+    public void Xwa_campaigns_follow_a_mission_list()
+    {
+        var list = XwaMissionList.Parse(new[] { "[Family Missions]", "1", "1b0m1.tie", "The Mining Guild", "[Battle 1]", "7", "* 1b1m1.tie", "!M0101!" });
+        var doc = new XwaPilotDocument(new XwaPilotFormat(), new byte[XwaPilotFormat.RecordSize], XwaPilotFormat.Schema, true, list, null);
+
+        Assert.Equal("Campaign", GroupOf(doc, "skipsRemaining"));
+        Assert.Equal("Campaign/Family Missions/1. The Mining Guild", GroupOf(doc, "tod[1].bestScore"));
+        Assert.Equal("Campaign/Battle 1/1. 1b1m1", GroupOf(doc, "tod[7].bestScore"));
+        Assert.DoesNotContain(doc.DisplayFields, f => f.Id == "tod[2].bestScore"); // not listed and empty
+    }
+
+    [Fact]
+    public void Game_files_next_to_the_pilot_are_never_read()
     {
         var dir = Directory.CreateTempSubdirectory("sfc-xwa").FullName;
         try
         {
             Directory.CreateDirectory(Path.Combine(dir, "MISSIONS"));
-            File.WriteAllText(Path.Combine(dir, "MISSIONS", "MISSION.LST"),
-                "// list\r\n[Family Missions]\r\n1\r\n1b0m1.tie\r\nThe Mining Guild\r\n[Battle 1]\r\n7\r\n* 1b1m1.tie\r\n!M0101!\r\n");
-            var data = new byte[XwaPilotFormat.RecordSize];
-            var doc = PilotFormats.Open(Path.Combine(dir, "PILOT.plt"), data, "xwaup");
+            File.WriteAllText(Path.Combine(dir, "MISSIONS", "MISSION.LST"), "[From the install]\r\n1\r\n1b0m1.tie\r\nShould not appear\r\n");
+            var doc = PilotFormats.Open(Path.Combine(dir, "PILOT.plt"), new byte[XwaPilotFormat.RecordSize], "xwaup");
 
-            Assert.Equal("Campaign", GroupOf(doc, "skipsRemaining"));
-            Assert.Equal("Campaign/Family Missions/1. The Mining Guild", GroupOf(doc, "tod[1].bestScore"));
-            Assert.Equal("Campaign/Battle 1/1. 1b1m1", GroupOf(doc, "tod[7].bestScore"));
-            Assert.DoesNotContain(doc.DisplayFields, f => f.Id == "tod[2].bestScore"); // not listed and empty
+            Assert.DoesNotContain(doc.DisplayFields, f => f.Group.Contains("From the install"));
+            Assert.Equal("Campaign/Mission 1", GroupOf(doc, "tod[1].bestScore"));
         }
         finally
         {

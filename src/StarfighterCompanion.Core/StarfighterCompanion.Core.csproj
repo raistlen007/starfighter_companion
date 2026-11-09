@@ -14,4 +14,9 @@
     <InternalsVisibleTo Include="StarfighterCompanion.Core.Tests" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Mission lists built into the program (see Data/MissionLists/README.md). -->
+    <EmbeddedResource Include="Data\MissionLists\*.lst" />
+  </ItemGroup>
+
 </Project>
