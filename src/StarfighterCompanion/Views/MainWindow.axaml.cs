@@ -20,6 +20,29 @@ public partial class MainWindow : Window
 
     private MainViewModel? ViewModel => DataContext as MainViewModel;
 
+    /// <summary>
+    /// The game and version menus act on a click and never keep a selection: a still-selected entry could not be
+    /// clicked again after coming back to the menu, because clicking it would not change the selection.
+    /// </summary>
+    private void OnMenuSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (sender is not ListBox list || list.SelectedItem is not { } item || ViewModel is not { } vm)
+        {
+            return;
+        }
+
+        list.SelectedItem = null;
+        switch (item)
+        {
+            case GameItemViewModel game:
+                vm.SelectedGameItem = game;
+                break;
+            case VariantItemViewModel variant:
+                vm.SelectedVariantItem = variant;
+                break;
+        }
+    }
+
     private void OnPreviewKeyDown(object? sender, KeyEventArgs e)
     {
         if (e.Key == Key.F && e.KeyModifiers.HasFlag(KeyModifiers.Control))

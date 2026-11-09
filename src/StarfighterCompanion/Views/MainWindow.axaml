@@ -114,7 +114,7 @@
               <TextBlock DockPanel.Dock="Top" Classes="sectionTitle" Text="Games" />
               <TextBlock DockPanel.Dock="Top" Classes="muted" FontSize="12" Margin="2,-4,0,8"
                          Text="Looking for installed games…" IsVisible="{Binding IsDetecting}" />
-              <ListBox ItemsSource="{Binding GameItems}" SelectedItem="{Binding SelectedGameItem}" Background="Transparent">
+              <ListBox ItemsSource="{Binding GameItems}" SelectionChanged="OnMenuSelectionChanged" Background="Transparent">
                 <ListBox.ItemTemplate>
                   <DataTemplate x:DataType="vm:GameItemViewModel">
                     <DockPanel Margin="2,4" Opacity="{Binding Opacity}">
@@ -135,7 +135,7 @@
               <Button DockPanel.Dock="Top" Classes="nav" Content="←  Back to game menu" Command="{Binding BackToGamesCommand}" />
               <TextBlock DockPanel.Dock="Top" Classes="sectionTitle" Text="{Binding CurrentGameName}" />
               <TextBlock DockPanel.Dock="Top" Classes="muted" FontSize="12" Margin="2,-4,0,8" Text="Choose a version" />
-              <ListBox ItemsSource="{Binding VariantItems}" SelectedItem="{Binding SelectedVariantItem}" Background="Transparent">
+              <ListBox ItemsSource="{Binding VariantItems}" SelectionChanged="OnMenuSelectionChanged" Background="Transparent">
                 <ListBox.ItemTemplate>
                   <DataTemplate x:DataType="vm:VariantItemViewModel">
                     <DockPanel Margin="2,4" Opacity="{Binding Opacity}">

@@ -99,7 +99,6 @@ public sealed partial class MainViewModel
             if (value is not null)
             {
                 OpenGame(value);
-                Dispatcher.UIThread.Post(() => Raise(nameof(SelectedGameItem)));
             }
         }
     }
@@ -112,7 +111,6 @@ public sealed partial class MainViewModel
             if (value is not null)
             {
                 _ = OpenVariantAsync(value);
-                Dispatcher.UIThread.Post(() => Raise(nameof(SelectedVariantItem)));
             }
         }
     }
