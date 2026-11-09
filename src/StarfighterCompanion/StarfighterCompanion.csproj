@@ -9,7 +9,7 @@
     <AssemblyName>StarfighterCompanion</AssemblyName>
     <RootNamespace>StarfighterCompanion</RootNamespace>
     <Product>Starfighter Companion</Product>
-    <Version>1.1.0</Version>
+    <Version>1.2.0</Version>
     <Copyright>Rasi and Starfighter Companion contributors. AGPL-3.0.</Copyright>
     <Authors>Rasi</Authors>
     <ApplicationManifest>app.manifest</ApplicationManifest>

@@ -87,22 +87,53 @@ public class TftcConversionTests
     }
 
     [Fact]
-    public void Converting_into_tftc_needs_an_existing_pilot()
+    public void Converting_into_tftc_creates_or_updates_the_pilot()
     {
         var dir = Directory.CreateTempSubdirectory("sfc-tftc").FullName;
         try
         {
             var target = PilotConverter.TargetsFor(new TiePilotFormat(), Edition.Tie98, ConversionTests.TiePilot()).Single(t => t.IsTftc);
-            Assert.Throws<ArgumentException>(() => PilotConverter.Plan(ConversionTests.TiePilot(), new TiePilotFormat(), Edition.Tie98, target, "Vader", dir));
+
+            var created = PilotConverter.Plan(ConversionTests.TiePilot(), new TiePilotFormat(), Edition.Tie98, target, "Vader", dir);
+            Assert.Equal(Path.Combine(dir, "Vader0.plt"), created.Path);
+            Assert.False(created.Overwrites);
+            var doc = PilotFormats.Open("Vader0.plt", created.Result.Data, "tftc");
+            Assert.Equal("Vader", doc.PilotName);
+            Assert.Equal(1, doc.Int("tod[9].completed"));
 
             File.WriteAllBytes(Path.Combine(dir, "Vader0.plt"), TftcPilot());
-            var plan = PilotConverter.Plan(ConversionTests.TiePilot(), new TiePilotFormat(), Edition.Tie98, target, "vader", dir);
-            Assert.Equal(Path.Combine(dir, "Vader0.plt"), plan.Path);
-            Assert.True(plan.Overwrites);
+            var updated = PilotConverter.Plan(ConversionTests.TiePilot(), new TiePilotFormat(), Edition.Tie98, target, "vader", dir);
+            Assert.Equal(Path.Combine(dir, "Vader0.plt"), updated.Path);
+            Assert.True(updated.Overwrites);
+
+            Assert.NotNull(PilotConverter.CheckName(target, "AVeryLongPilotName"));
         }
         finally
         {
             Directory.Delete(dir, recursive: true);
         }
+    }
+
+    [Fact]
+    public void A_new_tftc_pilot_is_set_up_like_the_game_does()
+    {
+        var data = TftcBridge.NewPilot("Maarek");
+        var doc = PilotFormats.Open("Maarek0.plt", data, "tftc");
+        Assert.Equal("Maarek", doc.PilotName);
+        Assert.Equal(2, doc.Int("rating"));
+        Assert.Equal("Civilian", doc.Field("ratingName").GetText());
+        Assert.Equal(3, doc.Int("skipsRemaining"));
+        Assert.Equal("Maarek's Game", doc.Field("gameName").GetText());
+        Assert.Equal(1, doc.Int("craftKnown[5]")); // TIE Fighter
+        Assert.Empty(doc.Validate().Where(i => i.Severity == Model.IssueSeverity.Error));
+
+        // Selected missions (OpenXWA Pilot_CreateNew): the first campaign mission (3) and the first melee mission (58).
+        int I32(int offset) => BitConverter.ToInt32(data, offset);
+        var gameName = XwaPilotFormat.Schema.Fields.Single(f => f.Id == "gameName").Offset;
+        Assert.Equal(58, I32(gameName - 28));
+        Assert.Equal(3, I32(gameName - 28 + 16));
+        var faction0 = XwaPilotFormat.Schema.Fields.Single(f => f.Id == "faction[0].missionsPlayed").Offset;
+        Assert.Equal(4, I32(faction0 + 8));
+        Assert.Equal(3, I32(faction0 + 12 + 16));
     }
 }

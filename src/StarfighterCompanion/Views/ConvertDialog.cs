@@ -119,7 +119,7 @@ public static class ConvertDialog
             var target = Target();
             folder = folderFor(target.VariantId);
             nameBox.Text = PilotConverter.SuggestName(format, pilotName, target, data);
-            nameBox.MaxLength = target.Edition?.NameMaxLength ?? 64;
+            nameBox.MaxLength = target.Edition?.NameMaxLength ?? (target.IsTftc ? TftcBridge.NameMaxLength : 64);
             Recompute();
         }
 

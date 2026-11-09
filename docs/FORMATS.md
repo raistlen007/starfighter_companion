@@ -128,7 +128,10 @@ Each format arranges its fields for display (`PilotDocument.BeginLayout`); the f
   the combat chamber craft to the `<craft> Training` sections of `tftc.combat.lst`, and TIE species *i* to XWA craft
   type *i* + 1. Into TFTC: the campaign and Combat Chamber missions of those sections, and the campaign kill and weapon
   statistics (career totals and the campaign-battles record), are replaced; everything else in the existing TFTC
-  pilot is kept. Out of TFTC: a mission counts as done when its completed count is set; kills are summed over the
+  pilot is kept. A new pilot is built as OpenXWA's `Pilot_CreateNew` does: rating 2 titled "Civilian" (TFTC's
+  `FRONTTXT.TXT` string 24), three skips, "<name>'s Game", the first campaign mission (3) and the first melee mission
+  (58, `MELEE\MISSION.LST`) selected, and the craft TFTC Classic's `SHIPLIST.TXT` marks Known unlocked
+  (`Data/CraftLists/tftc.known.txt`); it is saved as `<name>0.plt` (or the next free number). Out of TFTC: a mission counts as done when its completed count is set; kills are summed over the
   three kinds of mission; the active battle is the last one started and not finished.
 
 ## Adding a format
