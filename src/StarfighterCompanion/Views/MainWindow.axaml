@@ -260,8 +260,13 @@
             </StackPanel>
           </Border>
 
-          <Grid Grid.Row="1" ColumnDefinitions="250,5,*">
-            <TreeView Grid.Column="0" ItemsSource="{Binding Groups}" SelectedItem="{Binding SelectedGroup}" Margin="4">
+          <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="340" MinWidth="200" />
+              <ColumnDefinition Width="5" />
+              <ColumnDefinition Width="*" MinWidth="420" />
+            </Grid.ColumnDefinitions>
+            <TreeView Grid.Column="0" ItemsSource="{Binding Groups}" SelectedItem="{Binding SelectedGroup}" Margin="4" Padding="0,0,14,0">
               <TreeView.ItemTemplate>
                 <TreeDataTemplate x:DataType="vm:GroupNode" ItemsSource="{Binding Children}">
                   <TextBlock Text="{Binding Title}" />
@@ -276,7 +281,8 @@
               <TextBlock DockPanel.Dock="Top" Text="{Binding ListHeader}" FontWeight="SemiBold" Margin="2,8,0,6" TextTrimming="CharacterEllipsis" />
               <TextBlock DockPanel.Dock="Top" Text="{Binding EmptyListHint}" Classes="muted" Margin="2,0,0,0"
                          IsVisible="{Binding EmptyListHint, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
-              <ListBox x:Name="FieldList" ItemsSource="{Binding VisibleFields}" Background="Transparent">
+              <!-- Right padding keeps the value boxes clear of the scroll bar, which is drawn over the list. -->
+              <ListBox x:Name="FieldList" ItemsSource="{Binding VisibleFields}" Background="Transparent" Padding="0,0,22,0">
                 <ListBox.Styles>
                   <Style Selector="ListBoxItem">
                     <Setter Property="Padding" Value="6,4" />
@@ -310,7 +316,7 @@
 
           <DockPanel Grid.Row="3" Margin="8,4">
             <TextBlock DockPanel.Dock="Top" Text="{Binding IssueSummary}" FontWeight="SemiBold" Margin="2,0,0,4" />
-            <ListBox ItemsSource="{Binding Issues}" SelectedItem="{Binding SelectedIssue}" Background="Transparent">
+            <ListBox ItemsSource="{Binding Issues}" SelectedItem="{Binding SelectedIssue}" Background="Transparent" Padding="0,0,22,0">
               <ListBox.ItemTemplate>
                 <DataTemplate x:DataType="vm:IssueViewModel">
                   <StackPanel Orientation="Horizontal" Spacing="8">
